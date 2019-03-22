@@ -1,4 +1,4 @@
-package write_api
+package main
 
 import (
 	"github.com/g10guang/graduation/tools"
@@ -9,7 +9,7 @@ import (
 
 // Restful interface
 
-func post(out http.ResponseWriter, r *http.Request)() {
+func post(out http.ResponseWriter, r *http.Request) () {
 	ctx := tools.NewCtxWithLogID()
 	h := handler.NewPostHandler(r)
 	err := h.Handle(ctx, out, r)
@@ -26,4 +26,3 @@ func delete_(out http.ResponseWriter, r *http.Request) {
 		logrus.Errorf("delete Error: %s", err.Error())
 	}
 }
-

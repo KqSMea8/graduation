@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"github.com/g10guang/graduation/constdef"
+	"github.com/g10guang/graduation/store"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"path/filepath"
 	"strconv"
 )
 
@@ -19,7 +21,6 @@ type CommonHandler struct {
 
 func NewCommonHandler(r *http.Request) *CommonHandler {
 	h := &CommonHandler{}
-	h.UserId, _ = strconv.ParseInt(r.FormValue(constdef.Param_Uid), 10, 64)
 	return h
 }
 
@@ -33,4 +34,21 @@ func (h *CommonHandler) CheckParams(ctx context.Context) error {
 		return errors.New("uid == 0")
 	}
 	return nil
+}
+
+func (h *CommonHandler) parseParams(ctx context.Context, r *http.Request) (err error) {
+	if h.UserId, err = strconv.ParseInt(r.FormValue(constdef.Param_Uid), 10, 64); err != nil {
+		logrus.Errorf("CommonHandler parseParams Error: %s", err)
+	}
+	return err
+}
+
+var storage store.Storage
+
+func init() {
+	curDir, err := filepath.Abs(".")
+	if err != nil {
+		panic(err)
+	}
+	storage = store.NewLocalStorage(curDir)
 }

@@ -1,9 +1,10 @@
-package write_api
+package main
 
 import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
 )
+
 
 func main() {
 	log.Info("main init")
