@@ -22,12 +22,15 @@ func (h *GetHandler) Handle(ctx context.Context, out http.ResponseWriter, r *htt
 		return err
 	}
 
-	// 这里 WaitGroup 可以改为 JobMgr
+	// TODO 这里 WaitGroup 可以改为 JobMgr
+	// 1、获取图片元信息
+	// 2、获取图片二进制内容
 	var wg sync.WaitGroup
 	wg.Add(2)
 	var errNum int32
 	go func() {
 		defer wg.Done()
+		// TODO 获取元数据可以增加 redis 缓存
 		if err := h.loadFileContent(ctx); err != nil {
 			atomic.AddInt32(&errNum, 1)
 		}

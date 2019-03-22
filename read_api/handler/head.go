@@ -20,6 +20,7 @@ func (h *HeadHandler) Handle(ctx context.Context, out http.ResponseWriter, r *ht
 		h.genResponse(out, 400)
 		return
 	}
+	// TODO 增加 redis 缓存的访问
 	if err = h.loadFileMeta(ctx); err != nil {
 		h.genResponse(out, 500)
 		return

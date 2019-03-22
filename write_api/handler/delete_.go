@@ -59,6 +59,7 @@ func (h *DeleteHandler) delete_(ctx context.Context) (err error) {
 		}
 	}()
 
+	// TODO 删除 redis 缓存
 	if err = mysql.FileMySQL.Delete(db, h.Fid); err != nil {
 		return
 	}

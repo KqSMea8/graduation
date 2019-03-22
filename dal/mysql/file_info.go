@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"errors"
 	"os"
 
 	"github.com/g10guang/graduation/constdef"
@@ -53,6 +54,16 @@ func (h *FileInfoMySql) Delete(conn *gorm.DB, fid int64) (err error) {
 func (h *FileInfoMySql) Get(fid int64) (meta model.File, err error) {
 	if err = h.Conn.Where("fid = ?", fid).Find(&meta).Error; err != nil {
 		logrus.Errorf("Get Error: %s", err)
+	}
+	return
+}
+
+func (h *FileInfoMySql) MultiGet(fids []int64) (metas []*model.File, err error) {
+	if len(fids) == 0 {
+		return nil, errors.New("len(fids) == 0")
+	}
+	if err = h.Conn.Where("fid IN (?)", fids).Find(&metas).Error; err != nil {
+		logrus.Errorf("MultiGet Error: %vs", err)
 	}
 	return
 }
