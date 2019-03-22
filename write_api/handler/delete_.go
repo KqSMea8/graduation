@@ -18,19 +18,22 @@ type DeleteHandler struct {
 	Fid int64
 }
 
-func NewDeleteHandler(r *http.Request) *DeleteHandler {
+func NewDeleteHandler() *DeleteHandler {
 	return &DeleteHandler{
-		CommonHandler: NewCommonHandler(r),
+		CommonHandler: NewCommonHandler(),
 	}
 }
 
 func (h *DeleteHandler) Handle(ctx context.Context, out http.ResponseWriter, r *http.Request) (err error) {
 	if err = h.parseParams(ctx, r); err != nil {
+		h.genResponse(out, 200)
 		return err
 	}
 	if err = h.delete_(ctx); err != nil {
+		h.genResponse(out, 500)
 		return err
 	}
+	h.genResponse(out, 200)
 	return nil
 }
 
@@ -38,7 +41,7 @@ func (h *DeleteHandler) parseParams(ctx context.Context, r *http.Request) (err e
 	if err = h.CommonHandler.parseParams(ctx, r); err != nil {
 		return err
 	}
-	if h.Fid, err = strconv.ParseInt(r.FormValue(constdef.Param_File), 10, 64); err != nil {
+	if h.Fid, err = strconv.ParseInt(r.FormValue(constdef.Param_Fid), 10, 64); err != nil {
 		logrus.Errorf("parse fid Error: %s", err)
 		return err
 	}
@@ -56,9 +59,11 @@ func (h *DeleteHandler) delete_(ctx context.Context) (err error) {
 		}
 	}()
 
-	if err = mysql.FileMySQL.DeleteFileMeta(db, h.Fid); err != nil {
+	if err = mysql.FileMySQL.Delete(db, h.Fid); err != nil {
 		return
 	}
+
+	go storage.Delete(h.Fid)
 
 	err = h.PublishDeleteEvent(ctx)
 	return
@@ -72,4 +77,8 @@ func (h *DeleteHandler) PublishDeleteEvent(ctx context.Context) (err error) {
 	}
 	b, _ := json.Marshal(msg)
 	return mq.Publish(constdef.DeleteFileEventTopic, b)
+}
+
+func (h *DeleteHandler) genResponse(out http.ResponseWriter, statusCode int) {
+	out.WriteHeader(statusCode)
 }

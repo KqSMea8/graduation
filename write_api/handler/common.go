@@ -19,7 +19,7 @@ type CommonHandler struct {
 	UserId int64
 }
 
-func NewCommonHandler(r *http.Request) *CommonHandler {
+func NewCommonHandler() *CommonHandler {
 	h := &CommonHandler{}
 	return h
 }

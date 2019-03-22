@@ -34,18 +34,25 @@ func getFileInfoMySql() (string, string) {
 }
 
 // 写需要涉及到事务，所以由外部传递 connection
-func (h *FileInfoMySql) SaveFileMeta(conn *gorm.DB, file *model.File) error {
+func (h *FileInfoMySql) Save(conn *gorm.DB, file *model.File) error {
 	err := h.Conn.Create(file).Error
 	if err != nil {
-		logrus.Error("SaveFileMeta Error: %s", err)
+		logrus.Error("Save Error: %s", err)
 	}
 	return err
 }
 
 // 删需要涉及到事务，所以由外部传递 connection
-func (h *FileInfoMySql) DeleteFileMeta(conn *gorm.DB, fid int64) (err error) {
+func (h *FileInfoMySql) Delete(conn *gorm.DB, fid int64) (err error) {
 	if err = conn.Delete("fid = ?", fid).Error; err != nil {
-		logrus.Errorf("DeleteFileMeta Error: %s", err)
+		logrus.Errorf("Delete Error: %s", err)
+	}
+	return
+}
+
+func (h *FileInfoMySql) Get(fid int64) (meta model.File, err error) {
+	if err = h.Conn.Where("fid = ?", fid).Find(&meta).Error; err != nil {
+		logrus.Errorf("Get Error: %s", err)
 	}
 	return
 }

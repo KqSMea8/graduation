@@ -11,7 +11,7 @@ import (
 
 func post(out http.ResponseWriter, r *http.Request) () {
 	ctx := tools.NewCtxWithLogID()
-	h := handler.NewPostHandler(r)
+	h := handler.NewPostHandler()
 	err := h.Handle(ctx, out, r)
 	if err != nil {
 		logrus.Errorf("post Error: %s", err.Error())
@@ -20,7 +20,7 @@ func post(out http.ResponseWriter, r *http.Request) () {
 
 func delete_(out http.ResponseWriter, r *http.Request) {
 	ctx := tools.NewCtxWithLogID()
-	h := handler.NewDeleteHandler(r)
+	h := handler.NewDeleteHandler()
 	err := h.Handle(ctx, out, r)
 	if err != nil {
 		logrus.Errorf("delete Error: %s", err.Error())

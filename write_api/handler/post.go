@@ -25,9 +25,9 @@ type PostHandler struct {
 	Bytes      []byte
 }
 
-func NewPostHandler(r *http.Request) *PostHandler {
+func NewPostHandler() *PostHandler {
 	h := &PostHandler{
-		CommonHandler: NewCommonHandler(r),
+		CommonHandler: NewCommonHandler(),
 	}
 	return h
 }
@@ -36,12 +36,16 @@ func NewPostHandler(r *http.Request) *PostHandler {
 func (h *PostHandler) Handle(ctx context.Context, out http.ResponseWriter, r *http.Request) error {
 	var err error
 	if err = h.parseParams(ctx, r); err != nil {
+		// 用户参数错误
+		h.genResponse(out, 400)
 		return err
 	}
 	h.BuildFileMeta()
 	if err = h.SaveFile(ctx); err != nil {
+		h.genResponse(out, 500)
 		return err
 	}
+	h.genResponse(out, 200)
 	return nil
 }
 
@@ -73,11 +77,12 @@ func (h *PostHandler) SaveFile(ctx context.Context) (err error) {
 		if err == nil {
 			db.Commit()
 		} else {
+			go storage.Delete(h.FileMeta.Fid)
 			db.Rollback()
 		}
 	}()
 	// 保存文件元信息
-	if err = mysql.FileMySQL.SaveFileMeta(db, h.FileMeta); err != nil {
+	if err = mysql.FileMySQL.Save(db, h.FileMeta); err != nil {
 		return
 	}
 	// 保存文件内容
@@ -113,4 +118,9 @@ func (h *PostHandler) BuildFileMeta() {
 
 func (h *PostHandler) CalculateMd5() string {
 	return fmt.Sprintf("%x", md5.Sum(h.Bytes))
+}
+
+// 生成响应
+func (h *PostHandler) genResponse(out http.ResponseWriter, statusCode int) {
+	out.WriteHeader(statusCode)
 }
