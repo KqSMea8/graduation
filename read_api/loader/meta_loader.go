@@ -5,7 +5,7 @@ import (
 	"github.com/g10guang/graduation/dal/redis"
 )
 
-const Loader_FileMeta = "file_meta_loader"
+const LoaderName_FileMeta = "file_meta_loader"
 
 type FileMetaLoader struct {
 	fid int64
@@ -19,7 +19,7 @@ func NewFileMetaLoader(fid int64) *FileMetaLoader {
 }
 
 func (l *FileMetaLoader) GetName() string {
-	return Loader_FileMeta
+	return LoaderName_FileMeta
 }
 
 // 1、尝试从 redis 缓存中获取

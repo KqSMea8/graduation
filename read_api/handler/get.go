@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"github.com/g10guang/graduation/model"
 	"github.com/g10guang/graduation/read_api/loader"
 	"github.com/g10guang/graduation/tools"
 	"net/http"
@@ -24,13 +25,25 @@ func (h *GetHandler) Handle(ctx context.Context, out http.ResponseWriter, r *htt
 
 	// 1、获取图片元信息
 	// 2、获取图片二进制内容
-	// TODO 添加解析 loader 结果的代码
 	jobmgr := tools.NewJobMgr(time.Second)
 	jobmgr.AddJob(loader.NewFileMetaLoader(h.Fid))
 	jobmgr.AddJob(loader.NewFileContentLoader(h.Fid, storage))
 	if err = jobmgr.Start(ctx); err != nil {
 		h.genResponse(out, 500)
 		return
+	}
+	if result := jobmgr.GetResult(loader.LoaderName_FileMeta); result.Result != nil {
+		switch v := result.Result.(type) {
+		case model.File:
+			h.FileMeta = v
+		}
+	}
+
+	if result := jobmgr.GetResult(loader.LoaderName_FileContent); result.Result != nil {
+		switch v := result.Result.(type) {
+		case []byte:
+			h.Bytes = v
+		}
 	}
 
 	// 返回正常

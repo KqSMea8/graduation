@@ -4,7 +4,7 @@ import (
 	"github.com/g10guang/graduation/store"
 )
 
-const Loader_FileContent = "file_content_loader"
+const LoaderName_FileContent = "file_content_loader"
 
 type FileContentLoader struct {
 	fid     int64
@@ -19,7 +19,7 @@ func NewFileContentLoader(fids int64, storage store.Storage) *FileContentLoader 
 }
 
 func (l *FileContentLoader) GetName() string {
-	return Loader_FileContent
+	return LoaderName_FileContent
 }
 
 func (l *FileContentLoader) Run() (interface{}, error) {

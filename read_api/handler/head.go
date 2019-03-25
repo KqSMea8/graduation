@@ -3,12 +3,17 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"github.com/g10guang/graduation/model"
+	"github.com/g10guang/graduation/read_api/loader"
+	"github.com/g10guang/graduation/tools"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"time"
 )
 
 type HeadHandler struct {
 	*CommonHandler
+	FileMeta *model.File
 }
 
 func NewHeadHandler() *HeadHandler {
@@ -20,10 +25,17 @@ func (h *HeadHandler) Handle(ctx context.Context, out http.ResponseWriter, r *ht
 		h.genResponse(out, 400)
 		return
 	}
-	// TODO 增加 redis 缓存的访问
-	if err = h.loadFileMeta(ctx); err != nil {
+	jobmgr := tools.NewJobMgr(time.Second)
+	jobmgr.AddJob(loader.NewFileMetaLoader(h.Fid))
+	if err = jobmgr.Start(ctx); err != nil {
 		h.genResponse(out, 500)
 		return
+	}
+	if result := jobmgr.GetResult(loader.LoaderName_FileMeta); result.Result != nil {
+		switch v := result.Result.(type) {
+		case model.File:
+			h.FileMeta = &v
+		}
 	}
 	h.genResponse(out, 200)
 	return
