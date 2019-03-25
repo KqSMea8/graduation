@@ -22,7 +22,7 @@ func StopNsqProducer() {
 	nsqProducer.Stop()
 }
 
-func Publish(topic string, content []byte) error {
+func PublishNsq(topic string, content []byte) error {
 	logrus.Errorf("Send Topic %s content %s", string(content))
 	err := nsqProducer.Publish(topic, content)
 	logrus.Errorf("Send Topic %s Error: %s", topic, err)

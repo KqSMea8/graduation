@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/g10guang/graduation/dal/mq"
+	"github.com/g10guang/graduation/write_api/jobs"
 	"mime/multipart"
 	"net/http"
+	"sync/atomic"
 	"time"
 
 	"github.com/g10guang/graduation/constdef"
@@ -73,25 +75,30 @@ func (h *PostHandler) parseParams(ctx context.Context, r *http.Request) error {
 func (h *PostHandler) SaveFile(ctx context.Context) (err error) {
 	logrus.Debugf("SaveFile fid: %d", h.FileMeta.Fid)
 	db := mysql.FileMySQL.Conn.Begin()
+	var failNum int32
 	defer func() {
-		if err == nil {
-			db.Commit()
-		} else {
-			go storage.Delete(h.FileMeta.Fid)
+		if failNum > 0 {
 			db.Rollback()
+			go storage.Delete(h.FileMeta.Fid)
+		} else {
+			db.Commit()
 		}
 	}()
-	// 保存文件元信息
-	if err = mysql.FileMySQL.Save(db, h.FileMeta); err != nil {
+
+	jobmgr := tools.NewJobMgr(time.Second)
+	jobmgr.AddJob(jobs.NewSaveFileMetaJob(h.FileMeta, db))
+	jobmgr.AddJob(jobs.NewStoreFileJob(h.FileMeta.Fid, h.Bytes, storage))
+	if err = jobmgr.Start(ctx); err != nil {
+		logrus.Errorf("batch Job process Error: %s", err)
 		return
 	}
-	// 保存文件内容
-	err = storage.Write(h.FileMeta.Fid, h.Bytes)
-	if err != nil {
-		logrus.Errorf("Persistent File Error: %s", err)
-		return
+
+	// 最后发送消息不能够并行，不然会增大消费者处理难度
+	if	err = h.PublishPostFileEvent();  err != nil {
+		atomic.AddInt32(&failNum, 1)
+		logrus.Errorf("Send Nsq Error: %s", err)
 	}
-	err = h.PublishPostFileEvent()
+
 	return
 }
 
@@ -103,7 +110,7 @@ func (h *PostHandler) PublishPostFileEvent() error {
 		Timestamp: time.Now().Unix(),
 	}
 	b, _ := json.Marshal(msg)
-	return mq.Publish(constdef.PostFileEventTopic, b)
+	return mq.PublishNsq(constdef.PostFileEventTopic, b)
 }
 
 func (h *PostHandler) BuildFileMeta() {

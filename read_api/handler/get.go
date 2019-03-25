@@ -2,10 +2,10 @@ package handler
 
 import (
 	"context"
-	"github.com/pkg/errors"
+	"github.com/g10guang/graduation/read_api/loader"
+	"github.com/g10guang/graduation/tools"
 	"net/http"
-	"sync"
-	"sync/atomic"
+	"time"
 )
 
 type GetHandler struct {
@@ -22,34 +22,17 @@ func (h *GetHandler) Handle(ctx context.Context, out http.ResponseWriter, r *htt
 		return err
 	}
 
-	// TODO 这里 WaitGroup 可以改为 JobMgr
 	// 1、获取图片元信息
 	// 2、获取图片二进制内容
-	var wg sync.WaitGroup
-	wg.Add(2)
-	var errNum int32
-	go func() {
-		defer wg.Done()
-		// TODO 获取元数据可以增加 redis 缓存
-		if err := h.loadFileContent(ctx); err != nil {
-			atomic.AddInt32(&errNum, 1)
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		if err := h.loadFileMeta(ctx); err != nil {
-			atomic.AddInt32(&errNum, 1)
-		}
-	}()
-
-	wg.Wait()
-
-	// 返回错误
-	if errNum > 0 {
+	// TODO 添加解析 loader 结果的代码
+	jobmgr := tools.NewJobMgr(time.Second)
+	jobmgr.AddJob(loader.NewFileMetaLoader(h.Fid))
+	jobmgr.AddJob(loader.NewFileContentLoader(h.Fid, storage))
+	if err = jobmgr.Start(ctx); err != nil {
 		h.genResponse(out, 500)
-		return errors.New("coroutine load data error")
+		return
 	}
+
 	// 返回正常
 	h.genResponse(out, 200)
 	return

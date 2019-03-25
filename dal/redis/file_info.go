@@ -27,9 +27,20 @@ func (r *FileInfoRedis) GetFileMeta(fid int64) (meta model.File, err error) {
 	s, err := r.Conn.Get(r.GenFileMetaRedisKey(fid)).Result()
 	if err != nil {
 		logrus.Errorf("redis GetFileMeta Error: %s", err)
-		return nil, err
+		return meta, err
 	}
-	json.NewDecoder(strings.NewReader(s)).Decode(&meta)
+	if err = json.NewDecoder(strings.NewReader(s)).Decode(&meta); err != nil {
+		logrus.Errorf("unmarshal redis cache Error: %s", err)
+	}
+	return
+}
+
+func (r *FileInfoRedis) DeleteFileMeta(fid int64) error {
+	if _, err := r.Conn.Del(r.GenFileMetaRedisKey(fid)).Result(); err != nil {
+		logrus.Errorf("delete redis cache Error: %s", err)
+		return err
+	}
+	return nil
 }
 
 func (r *FileInfoRedis) GenFileMetaRedisKey(fid int64) string {

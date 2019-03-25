@@ -7,6 +7,8 @@ import (
 	"github.com/g10guang/graduation/dal/mq"
 	"github.com/g10guang/graduation/dal/mysql"
 	"github.com/g10guang/graduation/model"
+	"github.com/g10guang/graduation/tools"
+	"github.com/g10guang/graduation/write_api/jobs"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
@@ -59,12 +61,10 @@ func (h *DeleteHandler) delete_(ctx context.Context) (err error) {
 		}
 	}()
 
-	// TODO 删除 redis 缓存
-	if err = mysql.FileMySQL.Delete(db, h.Fid); err != nil {
-		return
-	}
-
-	go storage.Delete(h.Fid)
+	jobmgr := tools.NewJobMgr(time.Second)
+	jobmgr.AddJob(jobs.NewDeleteFileMetaJob(h.Fid, db))
+	jobmgr.AddJob(jobs.NewDeleteFileJob(h.Fid, storage))
+	jobmgr.Start(ctx)
 
 	err = h.PublishDeleteEvent(ctx)
 	return
@@ -77,7 +77,7 @@ func (h *DeleteHandler) PublishDeleteEvent(ctx context.Context) (err error) {
 		Timestamp: time.Now().Unix(),
 	}
 	b, _ := json.Marshal(msg)
-	return mq.Publish(constdef.DeleteFileEventTopic, b)
+	return mq.PublishNsq(constdef.DeleteFileEventTopic, b)
 }
 
 func (h *DeleteHandler) genResponse(out http.ResponseWriter, statusCode int) {
