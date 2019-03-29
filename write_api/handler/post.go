@@ -71,7 +71,6 @@ func (h *PostHandler) parseParams(ctx context.Context, r *http.Request) error {
 
 // 有可能有网络错误，唯一键冲突等
 // 因为整个过程涉及到不少网络操作，所以需要使用事务，免得数据库中插入了无用记录
-// TODO 以下操作需要改为并发，而且需要考虑处理失败的场景
 func (h *PostHandler) SaveFile(ctx context.Context) (err error) {
 	logrus.Debugf("SaveFile fid: %d", h.FileMeta.Fid)
 	db := mysql.FileMySQL.Conn.Begin()

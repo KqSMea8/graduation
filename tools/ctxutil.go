@@ -12,7 +12,7 @@ const CTX_LOG_ID = "log_id"
 
 // create log id
 func MakeLogID() string {
-	return time.Now().Format("20060102150405") + strconv.Itoa(int(GetLocalIpInt())) + strconv.Itoa(rand.Intn())
+	return time.Now().Format("20060102150405") + strconv.Itoa(int(GetLocalIpInt())) + strconv.Itoa(int(rand.Int31()))
 }
 
 // create a context with log id

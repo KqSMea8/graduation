@@ -46,7 +46,7 @@ func (h *CommonHandler) parseParams(ctx context.Context, r *http.Request) (err e
 var storage store.Storage
 
 func init() {
-	curDir, err := filepath.Abs(".")
+	curDir, err := filepath.Abs("../local_storage")
 	if err != nil {
 		panic(err)
 	}

@@ -21,3 +21,12 @@ const (
 	// Delete Picture Event Topic
 	DeleteFileEventTopic = "delete_file"
 )
+
+type ImageFormat int16
+
+// 支持的图片格式
+const (
+	InvalidImageFormat ImageFormat = iota
+	Jpeg
+	Png
+)

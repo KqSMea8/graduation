@@ -43,7 +43,7 @@ func (h *CommonHandler) loadFileContent(ctx context.Context) (err error) {
 var storage store.Storage
 
 func init() {
-	curDir, err := filepath.Abs(".")
+	curDir, err := filepath.Abs("../local_storage")
 	if err != nil {
 		panic(err)
 	}
