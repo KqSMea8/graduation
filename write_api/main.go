@@ -1,12 +1,14 @@
 package main
 
 import (
+	"github.com/g10guang/graduation/dal/mq"
 	"github.com/sirupsen/logrus"
 	"net/http"
 )
 
 
 func main() {
+	defer mq.StopNsqProducer()
 	var err error
 	initHttpHandler()
 	if err = http.ListenAndServe("0.0.0.0:9807", nil); err != nil {

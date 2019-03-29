@@ -9,7 +9,6 @@ import (
 	"github.com/g10guang/graduation/write_api/jobs"
 	"mime/multipart"
 	"net/http"
-	"sync/atomic"
 	"time"
 
 	"github.com/g10guang/graduation/constdef"
@@ -34,7 +33,6 @@ func NewPostHandler() *PostHandler {
 	return h
 }
 
-// TODO 添加 generate response
 func (h *PostHandler) Handle(ctx context.Context, out http.ResponseWriter, r *http.Request) error {
 	var err error
 	if err = h.parseParams(ctx, r); err != nil {
@@ -74,9 +72,8 @@ func (h *PostHandler) parseParams(ctx context.Context, r *http.Request) error {
 func (h *PostHandler) SaveFile(ctx context.Context) (err error) {
 	logrus.Debugf("SaveFile fid: %d", h.FileMeta.Fid)
 	db := mysql.FileMySQL.Conn.Begin()
-	var failNum int32
 	defer func() {
-		if failNum > 0 {
+		if err != nil {
 			db.Rollback()
 			go storage.Delete(h.FileMeta.Fid)
 		} else {
@@ -89,16 +86,16 @@ func (h *PostHandler) SaveFile(ctx context.Context) (err error) {
 	jobmgr.AddJob(jobs.NewStoreFileJob(h.FileMeta.Fid, h.Bytes, storage))
 	if err = jobmgr.Start(ctx); err != nil {
 		logrus.Errorf("batch Job process Error: %s", err)
-		return
+		return err
 	}
 
 	// 最后发送消息不能够并行，不然会增大消费者处理难度
 	if	err = h.PublishPostFileEvent();  err != nil {
-		atomic.AddInt32(&failNum, 1)
 		logrus.Errorf("Send Nsq Error: %s", err)
+		return err
 	}
 
-	return
+	return nil
 }
 
 // 发送一条消息到消息队列

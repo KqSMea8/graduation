@@ -45,6 +45,9 @@ func (h *FileInfoMySql) Save(conn *gorm.DB, file *model.File) error {
 
 // 删需要涉及到事务，所以由外部传递 connection
 func (h *FileInfoMySql) Delete(conn *gorm.DB, fid int64) (err error) {
+	if conn == nil {
+		conn = h.Conn
+	}
 	if err = conn.Delete("fid = ?", fid).Error; err != nil {
 		logrus.Errorf("Delete Error: %s", err)
 	}

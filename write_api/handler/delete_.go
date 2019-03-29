@@ -7,8 +7,7 @@ import (
 	"github.com/g10guang/graduation/dal/mq"
 	"github.com/g10guang/graduation/dal/mysql"
 	"github.com/g10guang/graduation/model"
-	"github.com/g10guang/graduation/tools"
-	"github.com/g10guang/graduation/write_api/jobs"
+	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
@@ -28,7 +27,7 @@ func NewDeleteHandler() *DeleteHandler {
 
 func (h *DeleteHandler) Handle(ctx context.Context, out http.ResponseWriter, r *http.Request) (err error) {
 	if err = h.parseParams(ctx, r); err != nil {
-		h.genResponse(out, 200)
+		h.genResponse(out, 400)
 		return err
 	}
 	if err = h.delete_(ctx); err != nil {
@@ -52,20 +51,10 @@ func (h *DeleteHandler) parseParams(ctx context.Context, r *http.Request) (err e
 
 // 事务 + 并发
 func (h *DeleteHandler) delete_(ctx context.Context) (err error) {
-	db := mysql.FileMySQL.Conn.Begin()
-	defer func() {
-		if err == nil {
-			db.Commit()
-		} else {
-			db.Rollback()
-		}
-	}()
-
-	jobmgr := tools.NewJobMgr(time.Second)
-	jobmgr.AddJob(jobs.NewDeleteFileMetaJob(h.Fid, db))
-	jobmgr.AddJob(jobs.NewDeleteFileJob(h.Fid, storage))
-	jobmgr.Start(ctx)
-
+	if err = mysql.FileMySQL.Delete(nil, h.Fid); err == gorm.ErrRecordNotFound {
+		logrus.Errorf("Uid: %d delete fid: %d not exist", h.UserId, h.Fid)
+		return err
+	}
 	err = h.PublishDeleteEvent(ctx)
 	return
 }

@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/g10guang/graduation/consumer/handler"
+	"github.com/g10guang/graduation/consumer/post_event/handler"
 	"github.com/g10guang/graduation/model"
 	"github.com/g10guang/graduation/tools"
 	"github.com/nsqio/go-nsq"
@@ -10,23 +10,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// 将图片转化为 jpeg 格式
-func jpegCompress(message *nsq.Message) error {
+// 将图片转化为 jpeg/png 格式
+func compress(message *nsq.Message) error {
 	msg := parsePostFileEventMsg(message.Body)
 	if msg == nil {
 		return errors.New("message error")
 	}
-	h := handler.NewJpegCompressHandler(msg)
+	h := handler.NewCompressHandler(msg)
 	if err := h.Handle(tools.NewCtxWithLogID()); err != nil {
-		logrus.Errorf("JpegCompressHandler Error: %s", err)
+		logrus.Errorf("CompressHandler Error: %s", err)
 		return err
 	}
-	logrus.Infof("JpegCompressHandler Success")
-	return nil
-}
-
-// 将图片转化为 png 格式
-func pngCompress(message *nsq.Message) error {
+	logrus.Infof("CompressHandler Success")
 	return nil
 }
 

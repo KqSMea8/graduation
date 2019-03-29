@@ -13,18 +13,18 @@ import (
 	"sync"
 )
 
-type JpegCompressHandler struct {
+type CompressHandler struct {
 	msg *model.PostFileEvent
 }
 
-func NewJpegCompressHandler(msg *model.PostFileEvent) *JpegCompressHandler {
-	h := &JpegCompressHandler{
+func NewCompressHandler(msg *model.PostFileEvent) *CompressHandler {
+	h := &CompressHandler{
 		msg: msg,
 	}
 	return h
 }
 
-func  (h *JpegCompressHandler) Handle(ctx context.Context) error {
+func  (h *CompressHandler) Handle(ctx context.Context) error {
 	data, err := storage.Read(h.msg.Fid)
 	if err != nil {
 		return err
