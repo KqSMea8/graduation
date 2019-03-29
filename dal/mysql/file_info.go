@@ -20,22 +20,25 @@ func NewFileInfoMySql() *FileInfoMySql {
 	h := &FileInfoMySql{}
 	h.Conn, err = gorm.Open(getFileInfoMySql())
 	if err != nil {
-		logrus.Panicf("Create UserInfo MySQL connection Error: %s", err)
+		logrus.Panicf("Create FileInfo MySQL connection Error: %s", err)
 		panic(err)
 	}
 	// In test env, print SQL gorm execute
-	if _, exists := os.LookupEnv(constdef.ENV_TestEnv); exists {
+	if _, exists := os.LookupEnv(constdef.ENV_ProductEnv); !exists {
 		h.Conn = h.Conn.Debug()
 	}
 	return h
 }
 
 func getFileInfoMySql() (string, string) {
-	return "mysql", "g10guang:workhard@/oos_meta?charset=utf8mb4&parseTime=True&loc=Local"
+	return "mysql", "g10guang:hello@tcp(10.8.118.15:3306)/oss_meta?charset=utf8mb4&parseTime=True&loc=Local"
 }
 
 // 写需要涉及到事务，所以由外部传递 connection
 func (h *FileInfoMySql) Save(conn *gorm.DB, file *model.File) error {
+	if conn == nil {
+		conn = h.Conn
+	}
 	err := h.Conn.Create(file).Error
 	if err != nil {
 		logrus.Error("Save Error: %s", err)

@@ -7,5 +7,5 @@ type User struct {
 }
 
 func (User) TableName() string {
-	return "user_info"
+	return "user"
 }
