@@ -35,7 +35,7 @@ func (j *DeleteFileMetaJob) Run() (interface{}, error) {
 	}
 	if err == nil {
 		// delete redis cache
-		err = redis.FileRedis.DeleteFileMeta(j.fid)
+		err = redis.FileRedis.Del(j.fid)
 	}
 	return nil, err
 }

@@ -7,26 +7,32 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"
 	"strings"
+	"time"
 )
 
 type FileInfoRedis struct {
-	Conn *redis.Client
+	conn *redis.Client
 }
 
 func NewFileInfoRedis() *FileInfoRedis {
 	h := &FileInfoRedis{}
-	h.Conn = redis.NewClient(&redis.Options{
-		Addr:     "127.0.0.1:6379",
+	h.conn = redis.NewClient(&redis.Options{
+		Addr:     "10.8.118.15:6379",
 		Password: "",
 		DB:       0,
 	})
 	return h
 }
 
-func (r *FileInfoRedis) GetFileMeta(fid int64) (meta model.File, err error) {
-	s, err := r.Conn.Get(r.GenFileMetaRedisKey(fid)).Result()
+
+func (r *FileInfoRedis) genKey(fid int64) string {
+	return fmt.Sprintf("f%d", fid)
+}
+
+func (r *FileInfoRedis) Get(fid int64) (meta model.File, err error) {
+	s, err := r.conn.Get(r.genKey(fid)).Result()
 	if err != nil {
-		logrus.Errorf("redis GetFileMeta Error: %s", err)
+		logrus.Errorf("redis Get Error: %s", err)
 		return meta, err
 	}
 	if err = json.NewDecoder(strings.NewReader(s)).Decode(&meta); err != nil {
@@ -35,14 +41,22 @@ func (r *FileInfoRedis) GetFileMeta(fid int64) (meta model.File, err error) {
 	return
 }
 
-func (r *FileInfoRedis) DeleteFileMeta(fid int64) error {
-	if _, err := r.Conn.Del(r.GenFileMetaRedisKey(fid)).Result(); err != nil {
+func (r *FileInfoRedis) Del(fid int64) error {
+	if _, err := r.conn.Del(r.genKey(fid)).Result(); err != nil {
 		logrus.Errorf("delete redis cache Error: %s", err)
 		return err
 	}
 	return nil
 }
 
-func (r *FileInfoRedis) GenFileMetaRedisKey(fid int64) string {
-	return fmt.Sprintf("f%d", fid)
+func (r *FileInfoRedis) Set(file *model.File) error {
+	b, err := json.Marshal(file)
+	if err != nil {
+		logrus.Errorf("json Marshal Error: %s", err)
+		return err
+	}
+	if _, err = r.conn.Set(r.genKey(file.Uid), string(b), time.Minute*5).Result(); err != nil {
+		logrus.Errorf("redis Set file: %+v", file)
+	}
+	return err
 }

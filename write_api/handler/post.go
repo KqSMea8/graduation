@@ -71,7 +71,7 @@ func (h *PostHandler) parseParams(ctx context.Context, r *http.Request) error {
 // 因为整个过程涉及到不少网络操作，所以需要使用事务，免得数据库中插入了无用记录
 func (h *PostHandler) SaveFile(ctx context.Context) (err error) {
 	logrus.Debugf("SaveFile fid: %d", h.FileMeta.Fid)
-	db := mysql.FileMySQL.Conn.Begin()
+	db := mysql.FileMySQL.Begin()
 	defer func() {
 		if err != nil {
 			db.Rollback()
