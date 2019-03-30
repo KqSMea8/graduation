@@ -24,10 +24,14 @@ func main() {
 	}
 	consumer.ChangeMaxInFlight(200)
 	consumer.AddHandler(nsq.HandlerFunc(compress))
-	if err = consumer.ConnectToNSQLookupds([]string{constdef.NsqLookupdIp}); err != nil {
+	if err = consumer.ConnectToNSQLookupds([]string{constdef.NsqLookupdAddr}); err != nil {
 		logrus.Panicf("ConnectToNSQLookupds Error: %s", err)
 		panic(err)
 	}
+	//if err = consumer.ConnectToNSQDs([]string{constdef.NsqdAddr}); err != nil {
+	//	logrus.Panicf("ConnectToNSQDs Error: %s", err)
+	//	panic(err)
+	//}
 
 	shutdown := make(chan os.Signal, 2)
 	signal.Notify(shutdown, syscall.SIGINT)
@@ -52,6 +56,7 @@ func clean() {
 
 // 将图片转化为 jpeg/png 格式
 func compress(message *nsq.Message) error {
+	logrus.Infof("message: %+v", message)
 	msg := parsePostFileEventMsg(message.Body)
 	if msg == nil {
 		return errors.New("message error")
@@ -66,9 +71,11 @@ func compress(message *nsq.Message) error {
 }
 
 func parsePostFileEventMsg(body []byte) *model.PostFileEvent {
+	logrus.Infof("post_file event message: %s", string(body))
 	m := new(model.PostFileEvent)
 	if err := json.Unmarshal(body, m); err != nil {
 		logrus.Errorf("PostFileEvent message Error: %s", err)
+		return nil
 	}
 	return m
 }

@@ -35,5 +35,6 @@ var ImageFormatList = []ImageFormat{Jpeg, Png}
 
 // NSQ 配置信息
 const (
-	NsqLookupdIp = "10.8.118.15:10000"
+	NsqLookupdAddr = "10.8.118.15:4161"
+	NsqdAddr       = "10.8.118.15:4150"
 )

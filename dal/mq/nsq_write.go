@@ -1,6 +1,7 @@
 package mq
 
 import (
+	"github.com/g10guang/graduation/constdef"
 	"github.com/nsqio/go-nsq"
 	"github.com/sirupsen/logrus"
 )
@@ -10,9 +11,8 @@ var nsqProducer *nsq.Producer
 
 func init() {
 	var err error
-	const addr = "10.8.118.15:10004"
 	config := nsq.NewConfig()
-	nsqProducer, err = nsq.NewProducer(addr, config)
+	nsqProducer, err = nsq.NewProducer(constdef.NsqdAddr, config)
 	if err != nil {
 		panic(err)
 	}
