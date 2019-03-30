@@ -15,9 +15,11 @@ import (
 )
 
 func main() {
+	tools.InitLog()
 	defer clean()
 
 	config := nsq.NewConfig()
+	config.MaxBackoffDuration = 0
 	consumer, err := nsq.NewConsumer(constdef.PostFileEventTopic, "compress", config)
 	if err != nil {
 		panic(err)
@@ -57,12 +59,13 @@ func clean() {
 // 将图片转化为 jpeg/png 格式
 func compress(message *nsq.Message) error {
 	logrus.Infof("message: %+v", message)
+	ctx := tools.NewCtxWithLogID()
 	msg := parsePostFileEventMsg(message.Body)
 	if msg == nil {
 		return errors.New("message error")
 	}
 	h := handler.NewCompressHandler(msg)
-	if err := h.Handle(tools.NewCtxWithLogID()); err != nil {
+	if err := h.Handle(ctx); err != nil {
 		logrus.Errorf("CompressHandler Error: %s", err)
 		return err
 	}

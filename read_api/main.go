@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+	tools.InitLog()
 	var err error
 	initHttpHandler()
 	if err = http.ListenAndServe("0.0.0.0:10002", nil); err != nil {
@@ -26,11 +27,16 @@ func get(out http.ResponseWriter, r *http.Request) {
 	h := handler.NewGetHandler()
 	err := h.Handle(ctx, out, r)
 	if err != nil {
-		logrus.Errorf("post Error: %s", err.Error())
+		logrus.Errorf("get Error: %s", err.Error())
 	}
 
 }
 
 func head(out http.ResponseWriter, r *http.Request) {
-
+	ctx := tools.NewCtxWithLogID()
+	h := handler.NewHeadHandler()
+	err := h.Handle(ctx, out, r)
+	if err != nil {
+		logrus.Errorf("head Error: %s", err.Error())
+	}
 }

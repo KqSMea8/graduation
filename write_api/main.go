@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	logrus.SetLevel(logrus.DebugLevel)
+	tools.InitLog()
 	defer mq.StopNsqProducer()
 	var err error
 	initHttpHandler()

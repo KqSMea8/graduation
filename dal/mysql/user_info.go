@@ -1,12 +1,11 @@
 package mysql
 
 import (
-	"github.com/g10guang/graduation/constdef"
 	"github.com/g10guang/graduation/model"
+	"github.com/g10guang/graduation/tools"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/sirupsen/logrus"
-	"os"
 )
 
 type UserInfoMySql struct {
@@ -22,7 +21,7 @@ func NewUserInfoMySql() *UserInfoMySql {
 		panic(err)
 	}
 	// In test env, print SQL gorm execute
-	if _, exists := os.LookupEnv(constdef.ENV_ProductEnv); !exists {
+	if !tools.IsProductEnv() {
 		h.Conn = h.Conn.Debug()
 	}
 	return h

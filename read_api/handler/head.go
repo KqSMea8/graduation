@@ -2,12 +2,11 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/g10guang/graduation/model"
 	"github.com/g10guang/graduation/read_api/loader"
 	"github.com/g10guang/graduation/tools"
-	"github.com/sirupsen/logrus"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -17,7 +16,9 @@ type HeadHandler struct {
 }
 
 func NewHeadHandler() *HeadHandler {
-	return &HeadHandler{}
+	return &HeadHandler{
+		CommonHandler: NewCommonHandler(),
+	}
 }
 
 func (h *HeadHandler) Handle(ctx context.Context, out http.ResponseWriter, r *http.Request) (err error) {
@@ -49,11 +50,16 @@ func (h *HeadHandler) parseParams(ctx context.Context, r *http.Request) (err err
 }
 
 func (h *HeadHandler) genResponse(out http.ResponseWriter, statusCode int) {
-	out.WriteHeader(statusCode)
 	if statusCode == 200 {
-		b, _ := json.Marshal(h.FileMeta)
-		if _, err := out.Write(b); err != nil {
-			logrus.Errorf("Http Write File Error: %s", err)
-		}
+		out.Header().Set("fid", strconv.FormatInt(h.FileMeta.Fid, 10))
+		out.Header().Set("uid", strconv.FormatInt(h.FileMeta.Uid, 10))
+		out.Header().Set("name", h.FileMeta.Name)
+		out.Header().Set("size", strconv.FormatInt(h.FileMeta.Size, 10))
+		out.Header().Set("md5", h.FileMeta.Md5)
+		out.Header().Set("create_time", strconv.FormatInt(h.FileMeta.CreateTime.Unix(), 10))
+		out.Header().Set("update_time", strconv.FormatInt(h.FileMeta.UpdateTime.Unix(), 10))
+		out.WriteHeader(200)
+	} else {
+		out.WriteHeader(statusCode)
 	}
 }

@@ -2,10 +2,8 @@ package mysql
 
 import (
 	"errors"
-	"os"
-
-	"github.com/g10guang/graduation/constdef"
 	"github.com/g10guang/graduation/model"
+	"github.com/g10guang/graduation/tools"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/sirupsen/logrus"
@@ -25,7 +23,7 @@ func NewFileInfoMySql() *FileInfoMySql {
 	}
 	h.conn = h.conn.Table("file")
 	// In test env, print SQL gorm execute
-	if _, exists := os.LookupEnv(constdef.ENV_ProductEnv); !exists {
+	if !tools.IsProductEnv() {
 		h.conn = h.conn.Debug()
 	}
 	return h

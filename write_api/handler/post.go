@@ -9,6 +9,7 @@ import (
 	"github.com/g10guang/graduation/write_api/jobs"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/g10guang/graduation/constdef"
@@ -45,6 +46,7 @@ func (h *PostHandler) Handle(ctx context.Context, out http.ResponseWriter, r *ht
 		h.genResponse(out, 500)
 		return err
 	}
+	out.Header().Set("fid", strconv.FormatInt(h.FileMeta.Fid, 10))
 	h.genResponse(out, 200)
 	return nil
 }
@@ -80,6 +82,10 @@ func (h *PostHandler) SaveFile(ctx context.Context) (err error) {
 		} else {
 			logrus.Debugf("post mysql commit")
 			db.Commit()
+			// 最后发送消息不能够并行，不然会增大消费者处理难度
+			if err = h.PublishPostFileEvent(); err != nil {
+				logrus.Errorf("Send Nsq Error: %s", err)
+			}
 		}
 	}()
 
@@ -88,12 +94,6 @@ func (h *PostHandler) SaveFile(ctx context.Context) (err error) {
 	jobmgr.AddJob(jobs.NewStoreFileJob(h.FileMeta.Fid, h.Bytes, storage))
 	if err = jobmgr.Start(ctx); err != nil {
 		logrus.Errorf("batch Job process Error: %s", err)
-		return err
-	}
-
-	// 最后发送消息不能够并行，不然会增大消费者处理难度
-	if err = h.PublishPostFileEvent(); err != nil {
-		logrus.Errorf("Send Nsq Error: %s", err)
 		return err
 	}
 

@@ -41,7 +41,7 @@ func  (h *CompressHandler) Handle(ctx context.Context) error {
 	var imageFormat constdef.ImageFormat
 
 	switch {
-	case strings.HasSuffix(meta.Name, "jpeg"):
+	case strings.HasSuffix(meta.Name, "jpeg") || strings.HasSuffix(meta.Name, "jpg"):
 		imageFormat = constdef.Jpeg
 	case strings.HasSuffix(meta.Name, "png"):
 		imageFormat = constdef.Png
