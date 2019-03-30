@@ -74,9 +74,11 @@ func (h *PostHandler) SaveFile(ctx context.Context) (err error) {
 	db := mysql.FileMySQL.Begin()
 	defer func() {
 		if err != nil {
+			logrus.Debugf("post mysql rollback")
 			db.Rollback()
 			go storage.Delete(h.FileMeta.Fid)
 		} else {
+			logrus.Debugf("post mysql commit")
 			db.Commit()
 		}
 	}()
@@ -90,7 +92,7 @@ func (h *PostHandler) SaveFile(ctx context.Context) (err error) {
 	}
 
 	// 最后发送消息不能够并行，不然会增大消费者处理难度
-	if	err = h.PublishPostFileEvent();  err != nil {
+	if err = h.PublishPostFileEvent(); err != nil {
 		logrus.Errorf("Send Nsq Error: %s", err)
 		return err
 	}
@@ -101,8 +103,8 @@ func (h *PostHandler) SaveFile(ctx context.Context) (err error) {
 // 发送一条消息到消息队列
 func (h *PostHandler) PublishPostFileEvent() error {
 	msg := &model.PostFileEvent{
-		Fid: h.FileMeta.Fid,
-		Uid: h.FileMeta.Uid,
+		Fid:       h.FileMeta.Fid,
+		Uid:       h.FileMeta.Uid,
 		Timestamp: time.Now().Unix(),
 	}
 	b, _ := json.Marshal(msg)
@@ -110,12 +112,15 @@ func (h *PostHandler) PublishPostFileEvent() error {
 }
 
 func (h *PostHandler) BuildFileMeta() {
+	now := time.Now()
 	h.FileMeta = &model.File{
-		Uid:  h.UserId,
-		Fid:  tools.GenID().Int64(),
-		Name: h.FileHeader.Filename,
-		Size: h.FileHeader.Size,
-		Md5:  h.CalculateMd5(),
+		Uid:        h.UserId,
+		Fid:        tools.GenID().Int64(),
+		Name:       h.FileHeader.Filename,
+		Size:       h.FileHeader.Size,
+		Md5:        h.CalculateMd5(),
+		CreateTime: now,
+		UpdateTime: now,
 	}
 }
 

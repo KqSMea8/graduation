@@ -9,10 +9,11 @@ import (
 )
 
 func main() {
+	logrus.SetLevel(logrus.DebugLevel)
 	defer mq.StopNsqProducer()
 	var err error
 	initHttpHandler()
-	if err = http.ListenAndServe("0.0.0.0:10001", nil); err != nil {
+	if err = http.ListenAndServe("0.0.0.0:10003", nil); err != nil {
 		logrus.Panicf("http.ListenAndServe Error: %s", err)
 	}
 	logrus.Infof("Main goroutine exit")
@@ -21,17 +22,12 @@ func main() {
 func initHttpHandler() {
 	logrus.Info("Init HttpHandler")
 	http.HandleFunc("/post", post)
-	http.HandleFunc("/update", delete_)
+	http.HandleFunc("/delete", delete_)
 }
 
 // Restful interface
 
 func post(out http.ResponseWriter, r *http.Request) () {
-	r.ParseForm()
-	//logrus.Infof("PostForm: %+v", r.PostForm)
-	out.WriteHeader(200)
-	out.Write([]byte("hello world"))
-	return
 	ctx := tools.NewCtxWithLogID()
 	h := handler.NewPostHandler()
 	err := h.Handle(ctx, out, r)

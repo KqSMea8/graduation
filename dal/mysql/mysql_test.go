@@ -11,7 +11,7 @@ func TestSaveFile(t *testing.T) {
 	err := FileMySQL.Save(nil, &model.File{
 		Fid: 1,
 		Uid: 1,
-		Name: "test",
+		Name: "静态资源缓存层级.jpg",
 		Size: 10,
 		CreateTime: time.Now(),
 		UpdateTime: time.Now(),

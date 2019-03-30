@@ -23,6 +23,7 @@ func NewFileInfoMySql() *FileInfoMySql {
 		logrus.Panicf("Create FileInfo MySQL connection Error: %s", err)
 		panic(err)
 	}
+	h.conn = h.conn.Table("file")
 	// In test env, print SQL gorm execute
 	if _, exists := os.LookupEnv(constdef.ENV_ProductEnv); !exists {
 		h.conn = h.conn.Debug()
@@ -41,7 +42,7 @@ func (h *FileInfoMySql) Save(conn *gorm.DB, file *model.File) error {
 	}
 	err := h.conn.Create(file).Error
 	if err != nil {
-		logrus.Error("Save Error: %s", err)
+		logrus.Errorf("Save Error: %s", err)
 	}
 	return err
 }
@@ -51,7 +52,7 @@ func (h *FileInfoMySql) Delete(conn *gorm.DB, fid int64) (err error) {
 	if conn == nil {
 		conn = h.conn
 	}
-	if err = conn.Delete("fid = ?", fid).Error; err != nil {
+	if err = conn.Where("fid = ?", fid).Delete(nil).Error; err != nil {
 		logrus.Errorf("Delete Error: %s", err)
 	}
 	return
