@@ -8,15 +8,16 @@ var kafkaProducer sarama.AsyncProducer
 
 var brokerList = []string{"127.0.0.1:9010", "127.0.0.1:9091"}
 
+// TODO 使用 kafka 时候需要重新添加 kafka
 func init() {
-	var err error
-	config := sarama.NewConfig()
-	config.Producer.RequiredAcks = sarama.WaitForAll
-	config.Producer.Retry.Max = 10
-	config.Producer.Return.Successes = true
-	if kafkaProducer, err = sarama.NewAsyncProducer(brokerList, config); err != nil {
-		panic(err)
-	}
+	//var err error
+	//config := sarama.NewConfig()
+	//config.Producer.RequiredAcks = sarama.WaitForAll
+	//config.Producer.Retry.Max = 10
+	//config.Producer.Return.Successes = true
+	//if kafkaProducer, err = sarama.NewAsyncProducer(brokerList, config); err != nil {
+	//	panic(err)
+	//}
 }
 
 func PublishKafka(topic, key, msg string) {

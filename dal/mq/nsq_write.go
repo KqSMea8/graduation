@@ -10,7 +10,7 @@ var nsqProducer *nsq.Producer
 
 func init() {
 	var err error
-	const addr = "127.0.0.1:4301"
+	const addr = "10.8.118.15:10004"
 	config := nsq.NewConfig()
 	nsqProducer, err = nsq.NewProducer(addr, config)
 	if err != nil {
@@ -23,8 +23,9 @@ func StopNsqProducer() {
 }
 
 func PublishNsq(topic string, content []byte) error {
-	logrus.Errorf("Send Topic %s content %s", string(content))
 	err := nsqProducer.Publish(topic, content)
-	logrus.Errorf("Send Topic %s Error: %s", topic, err)
+	if err != nil {
+		logrus.Errorf("PublishNsq Error: %s topic: %s content: %s", err, topic, string(content))
+	}
 	return err
 }
