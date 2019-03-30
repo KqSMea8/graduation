@@ -9,7 +9,7 @@ type DeleteFileJob struct {
 	storage store.Storage
 }
 
-func NewDeleteFileJob(fid int64, storage store.Storage) *DeleteFileMetaJob {
+func NewDeleteFileJob(fid int64, storage store.Storage) *DeleteFileJob {
 	j := &DeleteFileJob{
 		fid: fid,
 		storage: storage,

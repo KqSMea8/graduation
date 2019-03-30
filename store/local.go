@@ -1,6 +1,7 @@
 package store
 
 import (
+	"errors"
 	"fmt"
 	"github.com/g10guang/graduation/constdef"
 	"github.com/sirupsen/logrus"
@@ -14,9 +15,14 @@ type LocalStorage struct {
 	dirPath string
 }
 
-func NewLocalStorage(dir string) *LocalStorage {
+func NewLocalStorage() *LocalStorage {
+	goPath := os.Getenv("GOPATH")
+	if goPath == "" {
+		panic(errors.New("GOPATH not exists in env"))
+	}
+	dir := path.Join(goPath, "src/github.com/g10guang/graduation/oss")
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		if err = os.Mkdir(dir, 0666); err != nil {
+		if err = os.Mkdir(dir, 0777); err != nil {
 			panic(err)
 		}
 	}

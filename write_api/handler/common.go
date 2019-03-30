@@ -7,7 +7,6 @@ import (
 	"github.com/g10guang/graduation/store"
 	"github.com/sirupsen/logrus"
 	"net/http"
-	"path/filepath"
 	"strconv"
 )
 
@@ -46,9 +45,5 @@ func (h *CommonHandler) parseParams(ctx context.Context, r *http.Request) (err e
 var storage store.Storage
 
 func init() {
-	curDir, err := filepath.Abs("../local_storage")
-	if err != nil {
-		panic(err)
-	}
-	storage = store.NewLocalStorage(curDir)
+	storage = store.NewLocalStorage()
 }
