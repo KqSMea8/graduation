@@ -1,7 +1,6 @@
 package handler
 
-import (
-	"context"
+import ( "context"
 	"encoding/json"
 	"github.com/g10guang/graduation/constdef"
 	"github.com/g10guang/graduation/dal/mq"

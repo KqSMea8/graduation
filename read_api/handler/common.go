@@ -5,6 +5,7 @@ import (
 	"github.com/g10guang/graduation/constdef"
 	"github.com/g10guang/graduation/model"
 	"github.com/g10guang/graduation/store"
+	"github.com/g10guang/graduation/tools"
 	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
@@ -32,5 +33,9 @@ func (h *CommonHandler) parseParams(ctx context.Context, r *http.Request) (err e
 var storage store.Storage
 
 func init() {
-	storage = store.NewLocalStorage()
+	if tools.IsProductEnv() {
+		storage = store.NewHdfsStorage(constdef.WebHdfsAddr, constdef.WebHdfsUser, constdef.WebHdfsDir)
+	} else {
+		storage = store.NewLocalStorage()
+	}
 }

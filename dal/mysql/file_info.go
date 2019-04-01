@@ -76,3 +76,13 @@ func (h *FileInfoMySql) MultiGet(fids []int64) (metas []*model.File, err error) 
 func (h *FileInfoMySql) Begin() *gorm.DB {
 	return h.conn.Begin()
 }
+
+func (h *FileInfoMySql) UpdateMd5(fid int64, md5 string) error {
+	if err := h.conn.Where("fid = ?", fid).Update(map[string]string{
+		"md5": md5,
+	}).Error; err != nil {
+		logrus.Errorf("UpdateMd5 fid: %d Error: %s", fid, err)
+		return err
+	}
+	return nil
+}

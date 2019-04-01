@@ -45,8 +45,7 @@ func (h *GetHandler) Handle(ctx context.Context, out http.ResponseWriter, r *htt
 	}
 
 	if result := jobmgr.GetResult(loader.LoaderName_FileContent); result.Result != nil {
-		switch v := result.Result.(type) {
-		case io.Reader:
+		if v, ok := result.Result.(io.Reader); ok {
 			h.FileReader = v
 		}
 	}
@@ -74,7 +73,7 @@ func (h *GetHandler) genResponse(out http.ResponseWriter, statusCode int) {
 		out.Header().Set("update_time", strconv.FormatInt(h.FileMeta.UpdateTime.Unix(), 10))
 		_, err := io.Copy(out, h.FileReader)
 		if err != nil {
-			logrus.Panicf("write file to http response Error: %s", err)
+			logrus.Errorf("write file to http response Error: %s", err)
 			out.WriteHeader(500)
 	 	} else {
 	 		out.WriteHeader(200)

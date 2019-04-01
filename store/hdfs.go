@@ -59,7 +59,7 @@ func (s *HdfsStorage) Delete(fid int64) error {
 
 // 这里需要先进行一次 redirect，然后再将数据写入 data node
 func (s *HdfsStorage) write(filepath string, reader io.Reader) error {
-	isCreate, err := s.client.Create(reader, gowfs.Path{Name: filepath}, false, 0, 2, 0755, 0, "")
+	isCreate, err := s.client.Create(reader, gowfs.Path{Name: filepath}, true, 0, 2, 0755, 0, "")
 	if err != nil {
 		logrus.Errorf("webhdfs create file Error: %s", err)
 		return err

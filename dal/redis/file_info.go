@@ -31,6 +31,10 @@ func (r *FileInfoRedis) genKey(fid int64) string {
 
 func (r *FileInfoRedis) Get(fid int64) (meta model.File, err error) {
 	s, err := r.conn.Get(r.genKey(fid)).Result()
+	if err == redis.Nil {
+		logrus.Debugf("redis Get Fid: %d not found", fid)
+		return
+	}
 	if err != nil {
 		logrus.Errorf("redis Get Error: %s", err)
 		return meta, err
@@ -51,11 +55,12 @@ func (r *FileInfoRedis) Del(fid int64) error {
 
 func (r *FileInfoRedis) Set(file *model.File) error {
 	b, err := json.Marshal(file)
+	logrus.Debugf("set redis cache fid: %d json: %s", file.Fid, string(b))
 	if err != nil {
 		logrus.Errorf("json Marshal Error: %s", err)
 		return err
 	}
-	if _, err = r.conn.Set(r.genKey(file.Uid), string(b), time.Minute*5).Result(); err != nil {
+	if _, err = r.conn.Set(r.genKey(file.Fid), string(b), time.Minute*5).Result(); err != nil {
 		logrus.Errorf("redis Set file: %+v", file)
 	}
 	return err

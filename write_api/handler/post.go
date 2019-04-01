@@ -2,9 +2,7 @@ package handler
 
 import (
 	"context"
-	"crypto/md5"
 	"encoding/json"
-	"fmt"
 	"github.com/g10guang/graduation/dal/mq"
 	"github.com/g10guang/graduation/write_api/jobs"
 	"mime/multipart"
@@ -24,7 +22,6 @@ type PostHandler struct {
 	File       multipart.File
 	FileHeader *multipart.FileHeader
 	FileMeta   *model.File
-	Bytes      []byte
 }
 
 func NewPostHandler() *PostHandler {
@@ -59,11 +56,6 @@ func (h *PostHandler) parseParams(ctx context.Context, r *http.Request) error {
 	h.File, h.FileHeader, err = r.FormFile(constdef.Param_File)
 	if err != nil {
 		logrus.Errorf("Get Upload FileBytes Error: %s", err.Error())
-		return err
-	}
-	h.Bytes = make([]byte, int(h.FileHeader.Size))
-	if _, err = h.File.Read(h.Bytes); err != nil {
-		logrus.Errorf("Read File Error: %s", err)
 		return err
 	}
 	return nil
@@ -118,14 +110,10 @@ func (h *PostHandler) BuildFileMeta() {
 		Fid:        tools.GenID().Int64(),
 		Name:       h.FileHeader.Filename,
 		Size:       h.FileHeader.Size,
-		Md5:        h.CalculateMd5(),
+		//Md5:        "", 		// Md5 计算放在 consumer 中执行
 		CreateTime: now,
 		UpdateTime: now,
 	}
-}
-
-func (h *PostHandler) CalculateMd5() string {
-	return fmt.Sprintf("%x", md5.Sum(h.Bytes))
 }
 
 // 生成响应

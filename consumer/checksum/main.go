@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/g10guang/graduation/constdef"
-	"github.com/g10guang/graduation/consumer/post_event/handler"
+	"github.com/g10guang/graduation/consumer/checksum/handler"
 	"github.com/g10guang/graduation/model"
 	"github.com/g10guang/graduation/tools"
 	"github.com/nsqio/go-nsq"
@@ -20,12 +20,12 @@ func main() {
 
 	config := nsq.NewConfig()
 	config.MaxBackoffDuration = 0
-	consumer, err := nsq.NewConsumer(constdef.PostFileEventTopic, "compress", config)
+	consumer, err := nsq.NewConsumer(constdef.PostFileEventTopic, "checksum", config)
 	if err != nil {
 		panic(err)
 	}
 	consumer.ChangeMaxInFlight(200)
-	consumer.AddConcurrentHandlers(nsq.HandlerFunc(compress), 10)
+	consumer.AddConcurrentHandlers(nsq.HandlerFunc(checksum), 10)
 	if err = consumer.ConnectToNSQLookupds([]string{constdef.NsqLookupdAddr}); err != nil {
 		logrus.Panicf("ConnectToNSQLookupds Error: %s", err)
 		panic(err)
@@ -56,20 +56,20 @@ func clean() {
 
 }
 
-// 将图片转化为 jpeg/png 格式
-func compress(message *nsq.Message) error {
-	logrus.Debugf("compress message: %+v", message)
+// 计算 md5 checksum
+func checksum(message *nsq.Message) error {
+	logrus.Debugf("checksum message: %+v", message)
 	ctx := tools.NewCtxWithLogID()
 	msg := parsePostFileEventMsg(message.Body)
 	if msg == nil {
 		return errors.New("message error")
 	}
-	h := handler.NewCompressHandler(msg)
+	h := handler.NewChecksumHandler(msg)
 	if err := h.Handle(ctx); err != nil {
-		logrus.Errorf("CompressHandler Error: %s", err)
+		logrus.Errorf("ChecksumHandler Error: %s", err)
 		return err
 	}
-	logrus.Infof("CompressHandler Success")
+	logrus.Infof("ChecksumHandler Success")
 	return nil
 }
 
@@ -82,4 +82,3 @@ func parsePostFileEventMsg(body []byte) *model.PostFileEvent {
 	}
 	return m
 }
-

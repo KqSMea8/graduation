@@ -38,3 +38,10 @@ const (
 	NsqLookupdAddr = "10.8.118.15:4161"
 	NsqdAddr       = "10.8.118.15:4150"
 )
+
+// HDFS 配置
+const (
+	WebHdfsAddr = "10.8.118.15:50070"
+	WebHdfsUser = "root"
+	WebHdfsDir  = "/oss/image"
+)
