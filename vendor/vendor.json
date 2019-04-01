@@ -153,6 +153,12 @@
 			"revisionTime": "2019-03-11T16:20:41Z"
 		},
 		{
+			"checksumSHA1": "F67wiGkYwFV9BTBq/YLz1SfaXV0=",
+			"path": "github.com/vladimirvivien/gowfs",
+			"revision": "ff89ee6c94e1a9d643a5ea83f8839245b3b954c3",
+			"revisionTime": "2019-01-23T11:42:54Z"
+		},
+		{
 			"checksumSHA1": "QU00lGkD/G00hoTs2qG7q4xsLVc=",
 			"path": "golang.org/x/crypto/ssh/terminal",
 			"revision": "a1f597ede03a7bef967a422b5b3a5bd08805a01e",

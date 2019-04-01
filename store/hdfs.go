@@ -4,148 +4,87 @@ import (
 	"fmt"
 	"github.com/g10guang/graduation/constdef"
 	"github.com/sirupsen/logrus"
+	"github.com/vladimirvivien/gowfs"
 	"io"
-	"net/http"
 	"path"
 	"strconv"
-	"strings"
 )
 
 type HdfsStorage struct {
-	username     string
-	hdfsPath     string
-	dataNodeIp   string
-	dataNodePort int
-	webHdfsIp    string
-	webHdfsPort  int
-	client       *http.Client
+	client *gowfs.FileSystem
+	dir    string
 }
 
-func NewHdfsStorage(hdfsUsername, hdfsPath, dataNodeIp, webHdfsIp string, dataNodePort, webHdfsPort int) *HdfsStorage {
-	s := &HdfsStorage{
-		username:     hdfsUsername,
-		hdfsPath:     hdfsPath,
-		dataNodeIp:   dataNodeIp,
-		dataNodePort: dataNodePort,
-		webHdfsIp:    webHdfsIp,
-		webHdfsPort:  webHdfsPort,
-		client:       &http.Client{},
+func NewHdfsStorage(webhdfsAddr, user, dir string) *HdfsStorage {
+	webgowfsClient, err := gowfs.NewFileSystem(gowfs.Configuration{Addr: webhdfsAddr, User: user})
+	if err != nil {
+		panic(err)
 	}
-	s.hdfsPath = strings.Trim(s.hdfsPath, "/")
-	s.init()
-	// 判断 hdfsPath 是否存在，如果不存在，则创建
+	s := &HdfsStorage{
+		client: webgowfsClient,
+		dir:    dir,
+	}
 	return s
 }
 
-func (s *HdfsStorage) init() {
-	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s?op=MKDIRS&user.naem=%s", s.mkUrlPrefix(), s.username), nil)
-	if err != nil {
-		panic(err)
-	}
-	rsp, err := s.client.Do(req)
-	logrus.Debugf("webhdfs mkdirs req: %+v resp: %+v", req, rsp)
-	if err != nil {
-		panic(err)
-	}
-	if rsp.StatusCode != http.StatusOK {
-		panic(fmt.Errorf("http status code: %d not OK", rsp.StatusCode))
-	}
+func (s *HdfsStorage) Write(fid int64, reader io.Reader) error {
+	filePath := s.genFilePath(fid)
+	return s.write(filePath, reader)
 }
 
-func (s *HdfsStorage) mkUrlPrefix() string {
-	return fmt.Sprintf("http://%s:%d/webhdfs/v1/%s", s.webHdfsIp, s.webHdfsPort, s.hdfsPath)
+func (s *HdfsStorage) WriteWithFormat(fid int64, format constdef.ImageFormat, reader io.Reader) error {
+	filePath := s.genFilePath(fid, format)
+	return s.write(filePath, reader)
 }
 
-//type Storage interface {
-//	Write(fid int64, data []byte) error
-//	WriteWithFormat(fid int64, format constdef.ImageFormat, data []byte) error
-//	Read(fid int64) (data []byte, err error)
-//	ReadWithFormat(fid int64, format constdef.ImageFormat) (data []byte, err error)
-//	Delete(fid int64) error
-//}
+func (s *HdfsStorage) Read(fid int64) (io.Reader, error) {
+	filePath := s.genFilePath(fid)
+	return s.read(filePath)
+}
+
+func (s *HdfsStorage) ReadWithFormat(fid int64, format constdef.ImageFormat) (io.Reader, error) {
+	filePath := s.genFilePath(fid, format)
+	return s.read(filePath)
+}
+
+func (s *HdfsStorage) Delete(fid int64) error {
+	go s.delete_(s.genFilePath(fid))
+	for _, f := range constdef.ImageFormatList {
+		go func(id int64, f constdef.ImageFormat) {
+			s.delete_(s.genFilePath(id, f))
+		}(fid, f)
+	}
+	return nil
+}
 
 // 这里需要先进行一次 redirect，然后再将数据写入 data node
-func (s *HdfsStorage) write(filePath string, reader io.Reader) error {
-	url := fmt.Sprintf("%s/%s?user.name=%s&op=CREATE&overwrite=false&replicatoin=1", s.mkUrlPrefix(), filePath, s.username)
-	r, err := http.NewRequest(http.MethodPut, url, nil)
+func (s *HdfsStorage) write(filepath string, reader io.Reader) error {
+	isCreate, err := s.client.Create(reader, gowfs.Path{Name: filepath}, false, 0, 2, 0755, 0, "")
 	if err != nil {
-		panic(err)
-	}
-	rsp, err := s.client.Do(r)
-	logrus.Debugf("webhdfs create 1 req: %+v resp: %+v", r, rsp)
-	if err != nil {
-		logrus.Errorf("webhdfs create 1 Error: %s", err)
+		logrus.Errorf("webhdfs create file Error: %s", err)
 		return err
 	}
-	newUrl := rsp.Header.Get("Location")
-	r2, err := http.NewRequest(http.MethodPut, newUrl, reader)
-	if err != nil {
-		panic(err)
-	}
-	newRsp, err := s.client.Do(r2)
-	if err != nil {
-		logrus.Errorf("webhdfs create 2 file Error: %s", err)
-		return err
-	}
-	logrus.Debugf("webhdfs create 2 req: %+v resp: %+v", r, newRsp)
-	if newRsp.StatusCode != http.StatusOK {
-		logrus.Errorf("webhdfs create 2 statusCode: %d", http.StatusOK)
-		return fmt.Errorf("webhdfs create 2 status code: %d", newRsp.StatusCode)
-	}
+	logrus.Debugf("webhdfs path: %s create file success: %v", filepath, isCreate)
 	return nil
 }
 
 func (s *HdfsStorage) read(filePath string) (io.Reader, error) {
-	url := fmt.Sprintf("%s/%s?user.name=%s&op=OPEN", s.mkUrlPrefix(), filePath, s.username)
-	r, err := http.NewRequest(http.MethodPut, url, nil)
+	reader, err := s.client.Open(gowfs.Path{Name: filePath}, 0, 0, 0)
 	if err != nil {
-		panic(err)
+		logrus.Errorf("webhdfs open path: %s Error: %s", filePath, err)
+		return reader, err
 	}
-	rsp, err := s.client.Do(r)
-	logrus.Debugf("webhdfs open 1 req: %+v resp: %+v", r, rsp)
-	if err != nil {
-		logrus.Errorf("webhdfs open 1 Error: %s", err)
-		return nil, err
-	}
-	newUrl := rsp.Header.Get("Location")
-	r2, err := http.NewRequest(http.MethodGet, newUrl, nil)
-	if err != nil {
-		panic(err)
-	}
-	newRsp, err := s.client.Do(r2)
-	logrus.Debugf("webhdfs open 2 req: %+v resp: %+v", r, newRsp)
-	if err != nil {
-		logrus.Errorf("webhdfs open 2 file Error: %s", err)
-		return nil, err
-	}
-	if newRsp.StatusCode != http.StatusOK {
-		logrus.Errorf("webhdfs open 2 status code: %d", http.StatusOK)
-		return nil, fmt.Errorf("webhdfs open 2 status code: %d", newRsp.StatusCode)
-	}
-	return newRsp.Body, nil
+	return reader, nil
 }
 
 func (s *HdfsStorage) delete_(filePath string) error {
-	url := fmt.Sprintf("%s/%s?user.name=%s&op=DEELTE", s.mkUrlPrefix(), filePath, s.username)
-	r, err := http.NewRequest(http.MethodDelete, url, nil)
+	isDelete, err := s.client.Delete(gowfs.Path{Name: filePath}, false)
 	if err != nil {
-		panic(err)
-	}
-	rsp, err := s.client.Do(r)
-	logrus.Debugf("webhdfs delete 1 req: %+v resp: %+v", r, rsp)
-	if err != nil {
-		logrus.Errorf("webhdfs delete 1 Error: %s", err)
+		logrus.Errorf("webhdfs delete path: %s Error: %s", filePath, err)
 		return err
 	}
-	if rsp.StatusCode != http.StatusOK {
-		logrus.Errorf("webhdfs delete status code: %d", rsp.StatusCode)
-		return fmt.Errorf("webhdfs delete status code: %d", rsp.StatusCode)
-	}
+	logrus.Debugf("webhdfs delete path: %s success: %v", filePath, isDelete)
 	return nil
-}
-
-func (s *HdfsStorage) genFilePath(fid int64, format ...constdef.ImageFormat) string {
-	return path.Join("/oss/picture/", s.genFileName(fid, format...))
 }
 
 func (s *HdfsStorage) genFileName(fid int64, format ...constdef.ImageFormat) string {
@@ -153,4 +92,8 @@ func (s *HdfsStorage) genFileName(fid int64, format ...constdef.ImageFormat) str
 		return strconv.FormatInt(fid, 10)
 	}
 	return fmt.Sprintf("%d_%d", fid, format[0])
+}
+
+func (s *HdfsStorage) genFilePath(fid int64, format ...constdef.ImageFormat) string {
+	return path.Join(s.dir, s.genFileName(fid, format...))
 }

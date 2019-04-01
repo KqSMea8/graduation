@@ -91,7 +91,7 @@ func (h *PostHandler) SaveFile(ctx context.Context) (err error) {
 
 	jobmgr := tools.NewJobMgr(time.Second)
 	jobmgr.AddJob(jobs.NewSaveFileMetaJob(h.FileMeta, db))
-	jobmgr.AddJob(jobs.NewStoreFileJob(h.FileMeta.Fid, h.Bytes, storage))
+	jobmgr.AddJob(jobs.NewStoreFileJob(h.FileMeta.Fid, h.File, storage))
 	if err = jobmgr.Start(ctx); err != nil {
 		logrus.Errorf("batch Job process Error: %s", err)
 		return err

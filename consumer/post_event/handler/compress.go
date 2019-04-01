@@ -25,11 +25,10 @@ func NewCompressHandler(msg *model.PostFileEvent) *CompressHandler {
 }
 
 func  (h *CompressHandler) Handle(ctx context.Context) error {
-	data, err := storage.Read(h.msg.Fid)
+	reader, err := storage.Read(h.msg.Fid)
 	if err != nil {
 		return err
 	}
-	r := bytes.NewReader(data)
 	meta, err := mysql.FileMySQL.Get(h.msg.Fid)
 	if err != nil {
 		return err
@@ -52,7 +51,7 @@ func  (h *CompressHandler) Handle(ctx context.Context) error {
 		logrus.Errorf("invalid image format. image name: %s", meta.Name)
 		return nil
 	}
-	if err = tools.ImageCompress(r, jpegWriter, pngWriter, imageFormat); err != nil {
+	if err = tools.ImageCompress(reader, jpegWriter, pngWriter, imageFormat); err != nil {
 		logrus.Errorf("ImageCompress Error: %s", err)
 		return err
 	}
@@ -62,13 +61,13 @@ func  (h *CompressHandler) Handle(ctx context.Context) error {
 	// FIXME 如何处理失败的场景
 	go func() {
 		defer wg.Done()
-		if err := storage.WriteWithFormat(h.msg.Fid, constdef.Jpeg, jpegBuffer.Bytes()); err != nil {
+		if err := storage.WriteWithFormat(h.msg.Fid, constdef.Jpeg, jpegBuffer); err != nil {
 			logrus.Errorf("Write Fid: %d jpeg format Error: %s", err)
 		}
 	}()
 	go func() {
 		defer wg.Done()
-		if err := storage.WriteWithFormat(h.msg.Fid, constdef.Png, pngBuffer.Bytes()); err != nil {
+		if err := storage.WriteWithFormat(h.msg.Fid, constdef.Png, pngBuffer); err != nil {
 			logrus.Errorf("Write Fid: %d png format Error: %s", err)
 		}
 	}()

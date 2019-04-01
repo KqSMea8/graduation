@@ -1,10 +1,12 @@
 package store
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/g10guang/graduation/constdef"
 	"github.com/sirupsen/logrus"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -32,12 +34,12 @@ func NewLocalStorage() *LocalStorage {
 	return h
 }
 
-func (h *LocalStorage) Write(fid int64, data []byte) error {
+func (h *LocalStorage) Write(fid int64, reader io.Reader) error {
 	filePath := h.genFilePath(fid)
-	return h.write(filePath, data)
+	return h.write(filePath, reader)
 }
 
-func (h *LocalStorage) Read(fid int64) (data []byte, err error) {
+func (h *LocalStorage) Read(fid int64) (reader io.Reader, err error) {
 	filePath := h.genFilePath(fid)
 	return h.read(filePath)
 }
@@ -51,30 +53,35 @@ func (h *LocalStorage) Delete(fid int64) error {
 	return nil
 }
 
-func (h *LocalStorage) WriteWithFormat(fid int64, format constdef.ImageFormat, data []byte) error {
+func (h *LocalStorage) WriteWithFormat(fid int64, format constdef.ImageFormat, reader io.Reader) error {
 	filepath := h.genFilePath(fid, format)
-	return h.write(filepath, data)
+	return h.write(filepath, reader)
 }
 
-func (h *LocalStorage) ReadWithFormat(fid int64, format constdef.ImageFormat) (data []byte, err error) {
+func (h *LocalStorage) ReadWithFormat(fid int64, format constdef.ImageFormat) (reader io.Reader, err error) {
 	filepath := h.genFilePath(fid, format)
 	return h.read(filepath)
 }
 
-func (h *LocalStorage) write(path string, b []byte) error {
-	err := ioutil.WriteFile(path, b, 0666)
+func (h *LocalStorage) write(path string, reader io.Reader) error {
+	b, err := ioutil.ReadAll(reader)
+	if err != nil {
+		logrus.Errorf("local write read from io.Reader Error: %s", err)
+		return err
+	}
+	err = ioutil.WriteFile(path, b, 0666)
 	if err != nil {
 		logrus.Errorf("write %s Error: %s", path, err)
 	}
 	return err
 }
 
-func (h *LocalStorage) read(path string) ([]byte, error) {
+func (h *LocalStorage) read(path string) (io.Reader, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		logrus.Errorf("read %s Error: %s", path, err)
 	}
-	return b, err
+	return bytes.NewReader(b), err
 }
 
 func (h *LocalStorage) genFileName(fid int64, format ...constdef.ImageFormat) string {

@@ -101,6 +101,8 @@ curl -i -L "http://10.8.118.15:50070/webhdfs/v1/tmp/a?op=OPEN"
 
 ```bash
 curl -i -X DELETE "http://10.8.118.15:50070/webhdfs/v1/tmp/a?op=DELETE&user.name=root"
-curl -i -X DELETE "http://<host>:<port>/webhdfs/v1/<path>?op=DELETE
-                              [&recursive=<true |false>]"
 ```
+
+## FAQ
+
+对于 webhdfs Redirect Location 中使用 Hostname 而不是 ip:port 的情况，应该添加 `/etc/hosts`

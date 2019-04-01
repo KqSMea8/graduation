@@ -6,6 +6,7 @@ import (
 	"github.com/g10guang/graduation/read_api/loader"
 	"github.com/g10guang/graduation/tools"
 	"github.com/sirupsen/logrus"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -45,8 +46,8 @@ func (h *GetHandler) Handle(ctx context.Context, out http.ResponseWriter, r *htt
 
 	if result := jobmgr.GetResult(loader.LoaderName_FileContent); result.Result != nil {
 		switch v := result.Result.(type) {
-		case []byte:
-			h.Bytes = v
+		case io.Reader:
+			h.FileReader = v
 		}
 	}
 
@@ -71,7 +72,7 @@ func (h *GetHandler) genResponse(out http.ResponseWriter, statusCode int) {
 		out.Header().Set("md5", h.FileMeta.Md5)
 		out.Header().Set("create_time", strconv.FormatInt(h.FileMeta.CreateTime.Unix(), 10))
 		out.Header().Set("update_time", strconv.FormatInt(h.FileMeta.UpdateTime.Unix(), 10))
-		_, err := out.Write(h.Bytes)
+		_, err := io.Copy(out, h.FileReader)
 		if err != nil {
 			logrus.Panicf("write file to http response Error: %s", err)
 			out.WriteHeader(500)
