@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"code.byted.org/gopkg/logs"
 	"github.com/g10guang/graduation/model"
 	"github.com/sirupsen/logrus"
 	"testing"
@@ -52,5 +53,15 @@ func TestGetUser(t *testing.T) {
 		logrus.Errorf("MySQL Error: %s", err)
 	} else {
 		logrus.Infof("user: %+v", u)
+	}
+}
+
+func TestMGet(t *testing.T) {
+	metas, err := FileMySQL.MGet([]int64{1111964713210949632, 1111978462847893504})
+	if err != nil {
+		panic(err)
+	}
+	for _, m := range metas {
+		logs.Infof("meta: %+v", m)
 	}
 }

@@ -10,12 +10,12 @@ import (
 const LoaderName_FileMeta = "file_meta_loader"
 
 type FileMetaLoader struct {
-	fid int64
+	fids []int64
 }
 
-func NewFileMetaLoader(fid int64) *FileMetaLoader {
+func NewFileMetaLoader(fids []int64) *FileMetaLoader {
 	l := &FileMetaLoader{
-		fid: fid,
+		fids: fids,
 	}
 	return l
 }
@@ -28,19 +28,33 @@ func (l *FileMetaLoader) GetName() string {
 // 2、如果缓存没有命中，访问 mysql
 // 3、异步设置 redis 缓存
 func (l *FileMetaLoader) Run() (interface{}, error) {
-	if meta, err := redis.FileRedis.Get(l.fid); err == nil {
+	metas, missFids, err := redis.FileRedis.MGet(l.fids)
+	if err == nil {
+		// redis 出错尝试 mysql
 		logrus.Debugf("redis cache hit")
-		return meta, err
 	}
 
-	if meta, err := mysql.FileMySQL.Get(l.fid); err != nil {
-		return nil, err
-	} else {
-		l.saveRedisCache(meta)
-		return meta, nil
+	if len(missFids) == 0 {
+		// 全部 cache 命中
+		return metas, nil
 	}
+
+	metasFromMySQL, err := mysql.FileMySQL.MGet(missFids)
+	if err != nil {
+		return nil, err
+	}
+
+	go l.saveRedisCache(metasFromMySQL)
+	for _, m := range metasFromMySQL {
+		metas[m.Fid] = m
+	}
+
+	return metas, nil
 }
 
-func (l *FileMetaLoader) saveRedisCache(meta model.File) {
-	go redis.FileRedis.Set(&meta)
+func (l *FileMetaLoader) saveRedisCache(metas []*model.File) {
+	if len(metas) == 0 {
+		return
+	}
+	redis.FileRedis.MSet(metas)
 }

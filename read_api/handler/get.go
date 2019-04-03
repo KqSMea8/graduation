@@ -31,16 +31,15 @@ func (h *GetHandler) Handle(ctx context.Context, out http.ResponseWriter, r *htt
 	// 1、获取图片元信息
 	// 2、获取图片二进制内容
 	jobmgr := tools.NewJobMgr(time.Second)
-	jobmgr.AddJob(loader.NewFileMetaLoader(h.Fid))
+	jobmgr.AddJob(loader.NewFileMetaLoader([]int64{h.Fid}))
 	jobmgr.AddJob(loader.NewFileContentLoader(h.Fid, storage))
 	if err = jobmgr.Start(ctx); err != nil {
 		h.genResponse(out, 500)
 		return
 	}
 	if result := jobmgr.GetResult(loader.LoaderName_FileMeta); result.Result != nil {
-		switch v := result.Result.(type) {
-		case model.File:
-			h.FileMeta = v
+		if v, ok := result.Result.(map[int64]*model.File); ok {
+			h.FileMeta = *v[h.Fid]
 		}
 	}
 

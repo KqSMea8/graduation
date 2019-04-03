@@ -1,12 +1,14 @@
 package handler
 
-import ( "context"
+import (
+	"context"
 	"encoding/json"
 	"github.com/g10guang/graduation/constdef"
 	"github.com/g10guang/graduation/dal/mq"
 	"github.com/g10guang/graduation/dal/mysql"
 	"github.com/g10guang/graduation/model"
 	"github.com/jinzhu/gorm"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
@@ -15,7 +17,7 @@ import ( "context"
 
 type DeleteHandler struct {
 	*CommonHandler
-	Fid int64
+	Fids []int64
 }
 
 func NewDeleteHandler() *DeleteHandler {
@@ -41,31 +43,46 @@ func (h *DeleteHandler) parseParams(ctx context.Context, r *http.Request) (err e
 	if err = h.CommonHandler.parseParams(ctx, r); err != nil {
 		return err
 	}
-	if h.Fid, err = strconv.ParseInt(r.FormValue(constdef.Param_Fid), 10, 64); err != nil {
-		logrus.Errorf("parse fid Error: %s", err)
-		return err
+	fids := r.PostForm[constdef.Param_Fid]
+	h.Fids = make([]int64, len(fids))
+	for i, fid := range fids {
+		h.Fids[i], err = strconv.ParseInt(fid, 10, 64)
+		if err != nil {
+			logrus.Errorf("parse fid Error: %s", err)
+		}
 	}
+	if len(h.Fids) == 0 {
+		logrus.Errorf("empty delete fids")
+		return errors.New("empty delete fids")
+	}
+	logrus.Infof("fids: %+v", h.Fids)
 	return
 }
 
 // 事务 + 并发
 func (h *DeleteHandler) delete_(ctx context.Context) (err error) {
-	if err = mysql.FileMySQL.Delete(nil, h.Fid); err == gorm.ErrRecordNotFound {
-		logrus.Errorf("Uid: %d delete fid: %d not exist", h.UserId, h.Fid)
+	if err = mysql.FileMySQL.MDelete(nil, h.Fids); err == gorm.ErrRecordNotFound {
+		logrus.Errorf("Uid: %d delete fid: %v not exist", h.UserId, h.Fids)
 		return err
 	}
-	err = h.PublishDeleteEvent(ctx)
+	// 发送消息队列异步化
+	go h.PublishDeleteEvent(ctx)
 	return
 }
 
 func (h *DeleteHandler) PublishDeleteEvent(ctx context.Context) (err error) {
-	msg := &model.DeleteFileEvent{
-		Uid: h.UserId,
-		Fid: h.Fid,
-		Timestamp: time.Now().Unix(),
+	for _, fid := range h.Fids {
+		msg := &model.DeleteFileEvent{
+			Uid:       h.UserId,
+			Fid:       fid,
+			Timestamp: time.Now().Unix(),
+		}
+		b, _ := json.Marshal(msg)
+		if err = mq.PublishNsq(constdef.DeleteFileEventTopic, b); err != nil {
+			logrus.Errorf("Publish Delete Event Error: %s", err)
+		}
 	}
-	b, _ := json.Marshal(msg)
-	return mq.PublishNsq(constdef.DeleteFileEventTopic, b)
+	return err
 }
 
 func (h *DeleteHandler) genResponse(out http.ResponseWriter, statusCode int) {

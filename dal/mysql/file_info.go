@@ -56,6 +56,16 @@ func (h *FileInfoMySql) Delete(conn *gorm.DB, fid int64) (err error) {
 	return
 }
 
+func (h *FileInfoMySql) MDelete(conn *gorm.DB, fids []int64) (err error) {
+	if conn == nil {
+		conn = h.conn
+	}
+	if err = h.conn.Where("fid IN (?)", fids).Delete(nil).Error; err != nil {
+		logrus.Errorf("MDelete Error: %s", err)
+	}
+	return err
+}
+
 func (h *FileInfoMySql) Get(fid int64) (meta model.File, err error) {
 	if err = h.conn.Where("fid = ?", fid).Find(&meta).Error; err != nil {
 		logrus.Errorf("Get Error: %s", err)
@@ -63,12 +73,12 @@ func (h *FileInfoMySql) Get(fid int64) (meta model.File, err error) {
 	return
 }
 
-func (h *FileInfoMySql) MultiGet(fids []int64) (metas []*model.File, err error) {
+func (h *FileInfoMySql) MGet(fids []int64) (metas []*model.File, err error) {
 	if len(fids) == 0 {
 		return nil, errors.New("len(fids) == 0")
 	}
 	if err = h.conn.Where("fid IN (?)", fids).Find(&metas).Error; err != nil {
-		logrus.Errorf("MultiGet Error: %vs", err)
+		logrus.Errorf("MGet Error: %vs", err)
 	}
 	return
 }

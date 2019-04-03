@@ -2,6 +2,8 @@ package redis
 
 import (
 	"github.com/g10guang/graduation/model"
+	"github.com/go-redis/redis"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"testing"
 	"time"
@@ -55,5 +57,42 @@ func TestUserGet(t *testing.T) {
 		logrus.Errorf("Redis Get Error: %s", err)
 	} else {
 		logrus.Infof("Redis Get User: %+v", user)
+	}
+}
+
+func TestPipeline(t *testing.T) {
+	pipe := FileRedis.conn.Pipeline()
+	pipe.Get("hello")
+	pipe.Get("world")
+	pipe.SetNX("hello", "100", 0)
+	cmd, err := pipe.Exec()
+	if err != nil {
+		panic(err)
+	}
+	for _, c := range cmd {
+		logrus.Infof("cmd: %+v", c)
+		s, ok := c.(*redis.StringCmd)
+		if !ok {
+			panic(errors.New("type conversion error"))
+		}
+		r, err := s.Result()
+		if err != nil {
+			panic(err)
+		}
+		logrus.Infof("r: %+v", r)
+	}
+}
+
+func TestMGet(t *testing.T) {
+	r, err := FileRedis.conn.MGet("hello", "world", "no_exist").Result()
+	if err != nil {
+		logrus.Panicf("access redis Error: %s", err)
+		panic(err)
+	}
+	for _, v := range r {
+		logrus.Info(v == nil)
+		if v != nil {
+			logrus.Info(v.(string))
+		}
 	}
 }

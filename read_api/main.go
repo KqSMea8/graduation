@@ -22,7 +22,7 @@ func main() {
 
 func initHttpHandler() {
 	http.HandleFunc("/get", get)
-	http.HandleFunc("/head", head)
+	http.HandleFunc("/meta", meta)
 }
 
 func get(out http.ResponseWriter, r *http.Request) {
@@ -35,9 +35,9 @@ func get(out http.ResponseWriter, r *http.Request) {
 
 }
 
-func head(out http.ResponseWriter, r *http.Request) {
+func meta(out http.ResponseWriter, r *http.Request) {
 	ctx := tools.NewCtxWithLogID()
-	h := handler.NewHeadHandler()
+	h := handler.NewMetaHandler()
 	err := h.Handle(ctx, out, r)
 	if err != nil {
 		logrus.Errorf("head Error: %s", err.Error())

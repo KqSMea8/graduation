@@ -27,9 +27,9 @@ func (j *SaveFileMetaJob) GetName() string {
 
 func (j *SaveFileMetaJob) Run() (interface{}, error) {
 	if err := j.db.Debug().Save(j.file).Error; err != nil {
-		logrus.Errorf("Save FileMeta: %+v to mysql Error: %s", j.file, err)
+		logrus.Errorf("Save FileMetas: %+v to mysql Error: %s", j.file, err)
 		return nil, err
 	}
-	logrus.Infof("Save FileMeta: %+v success", j.file)
+	logrus.Infof("Save FileMetas: %+v success", j.file)
 	return nil, nil
 }

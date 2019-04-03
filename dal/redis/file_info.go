@@ -45,6 +45,35 @@ func (r *FileInfoRedis) Get(fid int64) (meta model.File, err error) {
 	return
 }
 
+func (r *FileInfoRedis) MGet(fids []int64) (metas map[int64]*model.File, missFids []int64, err error) {
+	fidsKey := make([]string, len(fids))
+	for i, fid := range fids {
+		fidsKey[i] = r.genKey(fid)
+	}
+	result, err := r.conn.MGet(fidsKey...).Result()
+	if err != nil {
+		// redis error
+		logrus.Errorf("redis mget Error: %s", err)
+		return nil, nil, err
+	}
+	for i, v := range result {
+		if v == nil {
+			// cache not found
+			missFids = append(missFids, fids[i])
+			continue
+		}
+		m := new(model.File)
+		if err = json.NewDecoder(strings.NewReader(v.(string))).Decode(m); err != nil {
+			missFids = append(missFids, fids[i])
+			logrus.Errorf("unmarshal FileMetas Error: %s", err)
+			continue
+		}
+		// cache hit
+		metas[fids[i]] = m
+	}
+	return metas, missFids, nil
+}
+
 func (r *FileInfoRedis) Del(fid int64) error {
 	if _, err := r.conn.Del(r.genKey(fid)).Result(); err != nil {
 		logrus.Errorf("delete redis cache Error: %s", err)
@@ -53,6 +82,7 @@ func (r *FileInfoRedis) Del(fid int64) error {
 	return nil
 }
 
+// 因为 MSet 不支持超时
 func (r *FileInfoRedis) Set(file *model.File) error {
 	b, err := json.Marshal(file)
 	logrus.Debugf("set redis cache fid: %d json: %s", file.Fid, string(b))
@@ -64,4 +94,22 @@ func (r *FileInfoRedis) Set(file *model.File) error {
 		logrus.Errorf("redis Set file: %+v", file)
 	}
 	return err
+}
+
+func (r *FileInfoRedis) MSet(files []*model.File) error {
+	pipe := r.conn.Pipeline()
+	for _, meta := range files {
+		b, err := json.Marshal(meta)
+		if err != nil {
+			logrus.Errorf("json Marshal Error: %s", err)
+			continue
+		}
+		pipe.Set(r.genKey(meta.Fid), string(b), time.Minute * 5)
+	}
+	_, err := pipe.Exec()
+	if err != nil {
+		logrus.Errorf("Multi Set redis pipeline Error: %s", err)
+		return err
+	}
+	return nil
 }
