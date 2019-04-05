@@ -54,12 +54,14 @@ func (r *FileInfoRedis) MGet(fids []int64) (metas map[int64]*model.File, missFid
 	if err != nil {
 		// redis error
 		logrus.Errorf("redis mget Error: %s", err)
-		return nil, nil, err
+		// 如果 redis 发生错误，则所有 fids 都 miss
+		return nil, fids, err
 	}
 	for i, v := range result {
 		if v == nil {
 			// cache not found
 			missFids = append(missFids, fids[i])
+			logrus.Debugf("fid: %d redis cache not found", fids[i])
 			continue
 		}
 		m := new(model.File)
@@ -69,6 +71,7 @@ func (r *FileInfoRedis) MGet(fids []int64) (metas map[int64]*model.File, missFid
 			continue
 		}
 		// cache hit
+		logrus.Debugf("fid: %d redis cache hit", fids[i])
 		metas[fids[i]] = m
 	}
 	return metas, missFids, nil

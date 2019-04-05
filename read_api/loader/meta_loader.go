@@ -29,9 +29,10 @@ func (l *FileMetaLoader) GetName() string {
 // 3、异步设置 redis 缓存
 func (l *FileMetaLoader) Run() (interface{}, error) {
 	metas, missFids, err := redis.FileRedis.MGet(l.fids)
-	if err == nil {
+	if err != nil {
 		// redis 出错尝试 mysql
-		logrus.Debugf("redis cache hit")
+		// 因为 redis 缓存获取非核心逻辑，所以允许失败，但是在高并发场景下，可能会将下游 MySQL 打扒，导致整个体统瘫痪
+		logrus.Errorf("redis Error: %s", err)
 	}
 
 	if len(missFids) == 0 {
@@ -44,6 +45,7 @@ func (l *FileMetaLoader) Run() (interface{}, error) {
 		return nil, err
 	}
 
+	// 只缓存 missFids
 	go l.saveRedisCache(metasFromMySQL)
 	for _, m := range metasFromMySQL {
 		metas[m.Fid] = m

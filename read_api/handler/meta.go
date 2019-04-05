@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/g10guang/graduation/constdef"
 	"github.com/g10guang/graduation/model"
 	"github.com/g10guang/graduation/read_api/loader"
@@ -52,6 +53,7 @@ func (h *MetaHandler) parseParams(ctx context.Context, r *http.Request) (err err
 	if err = h.CommonHandler.parseParams(ctx, r); err != nil {
 		return err
 	}
+	// 解析 post 表单中提交的 fid slice
 	fids := r.PostForm[constdef.Param_Fid]
 	h.Fids = make([]int64, len(fids))
 	for i, fid := range fids {
@@ -63,6 +65,10 @@ func (h *MetaHandler) parseParams(ctx context.Context, r *http.Request) (err err
 	if len(h.Fids) == 0 {
 		logrus.Errorf("empty meta fids")
 		return errors.New("empty fids")
+	}
+	if len(h.Fids) > 100 {
+		logrus.Errorf("too much fids len=%d", len(h.Fids))
+		return fmt.Errorf("too much fids len=%s", len(h.Fids))
 	}
 	return
 }
