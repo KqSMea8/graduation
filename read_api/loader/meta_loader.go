@@ -40,6 +40,10 @@ func (l *FileMetaLoader) Run() (interface{}, error) {
 		return metas, nil
 	}
 
+	if metas == nil {
+		metas = make(map[int64]*model.File, len(l.fids))
+	}
+
 	metasFromMySQL, err := mysql.FileMySQL.MGet(missFids)
 	if err != nil {
 		return nil, err

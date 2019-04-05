@@ -57,6 +57,7 @@ func (r *FileInfoRedis) MGet(fids []int64) (metas map[int64]*model.File, missFid
 		// 如果 redis 发生错误，则所有 fids 都 miss
 		return nil, fids, err
 	}
+	metas = make(map[int64]*model.File, len(fids))
 	for i, v := range result {
 		if v == nil {
 			// cache not found
