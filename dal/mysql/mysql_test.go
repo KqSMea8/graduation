@@ -65,3 +65,9 @@ func TestMGet(t *testing.T) {
 		logs.Infof("meta: %+v", m)
 	}
 }
+
+func TestDel(t *testing.T) {
+	if err := FileMySQL.Delete(nil, []int64{0}); err != nil {
+		panic(err)
+	}
+}

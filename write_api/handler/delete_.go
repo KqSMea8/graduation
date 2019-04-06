@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"github.com/g10guang/graduation/constdef"
 	"github.com/g10guang/graduation/dal/mq"
-	"github.com/g10guang/graduation/dal/mysql"
 	"github.com/g10guang/graduation/model"
-	"github.com/jinzhu/gorm"
+	"github.com/g10guang/graduation/tools"
+	"github.com/g10guang/graduation/write_api/jobs"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -59,10 +59,11 @@ func (h *DeleteHandler) parseParams(ctx context.Context, r *http.Request) (err e
 	return
 }
 
-// 事务 + 并发
 func (h *DeleteHandler) delete_(ctx context.Context) (err error) {
-	if err = mysql.FileMySQL.MDelete(nil, h.Fids); err == gorm.ErrRecordNotFound {
-		logrus.Errorf("Uid: %d delete fid: %v not exist", h.UserId, h.Fids)
+	jobmgr := tools.NewJobMgr(time.Second)
+	jobmgr.AddJob(jobs.NewDeleteFileMetaJob(h.Fids))
+	if err := jobmgr.Start(ctx); err != nil {
+		logrus.Errorf("delete fids job exec Error: %s", err)
 		return err
 	}
 	// 发送消息队列异步化

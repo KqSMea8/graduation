@@ -29,6 +29,8 @@ const (
 	InvalidImageFormat ImageFormat = iota
 	Jpeg
 	Png
+	WaterMarkJpeg
+	WaterMarkPng
 )
 
 var ImageFormatList = []ImageFormat{Jpeg, Png}

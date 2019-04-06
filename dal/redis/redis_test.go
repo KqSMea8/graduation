@@ -96,3 +96,16 @@ func TestMGet(t *testing.T) {
 		}
 	}
 }
+
+func TestBytes(t *testing.T) {
+	r, err := ContentRedis.conn.Set("hello", []byte{10, 0, 0, 10, 0}, time.Second * 100).Result()
+	if err != nil {
+		panic(err)
+	}
+	logrus.Infof("redis Content: %v", r)
+	p, err := ContentRedis.conn.Get("hello").Bytes()
+	if err != nil {
+		panic(err)
+	}
+	logrus.Infof("redis response: %v", p)
+}

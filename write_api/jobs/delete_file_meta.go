@@ -3,21 +3,19 @@ package jobs
 import (
 	"github.com/g10guang/graduation/dal/mysql"
 	"github.com/g10guang/graduation/dal/redis"
-	"github.com/jinzhu/gorm"
+	"github.com/sirupsen/logrus"
 )
 
 const JobName_DeleteFileMeta = "delete_file_meta"
 const retryTime = 2
 
 type DeleteFileMetaJob struct {
-	fid int64
-	db  *gorm.DB
+	fids []int64
 }
 
-func NewDeleteFileMetaJob(fid int64, conn *gorm.DB) *DeleteFileMetaJob {
+func NewDeleteFileMetaJob(fids []int64) *DeleteFileMetaJob {
 	j := &DeleteFileMetaJob{
-		fid: fid,
-		db:  conn,
+		fids: fids,
 	}
 	return j
 }
@@ -26,16 +24,29 @@ func (j *DeleteFileMetaJob) GetName() string {
 	return JobName_DeleteFileMeta
 }
 
+// 采用事务
 func (j *DeleteFileMetaJob) Run() (interface{}, error) {
 	var err error
-	for i := 0; i < retryTime; i++ {
-		if err = mysql.FileMySQL.Delete(j.db, j.fid); err == nil {
-			break
+	conn := mysql.FileMySQL.Begin()
+	defer func() {
+		if err != nil {
+			// 执行失败回滚 mysql
+			conn.Rollback()
+		} else {
+			conn.Commit()
+			// 延时删除
+			go func() {
+				redis.FileRedis.Del(j.fids)
+			}()
 		}
+	}()
+	if err = mysql.FileMySQL.Delete(conn, j.fids); err != nil {
+		logrus.Errorf("Delete MySQL Error: %s", err)
+		return nil, err
 	}
-	if err == nil {
-		// delete redis cache
-		err = redis.FileRedis.Del(j.fid)
+
+	if err= redis.FileRedis.Del(j.fids); err != nil {
+		return nil, err
 	}
-	return nil, err
+	return nil, nil
 }

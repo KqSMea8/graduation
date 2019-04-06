@@ -46,24 +46,14 @@ func (h *FileInfoMySql) Save(conn *gorm.DB, file *model.File) error {
 }
 
 // 删需要涉及到事务，所以由外部传递 connection
-func (h *FileInfoMySql) Delete(conn *gorm.DB, fid int64) (err error) {
+func (h *FileInfoMySql) Delete(conn *gorm.DB, fids []int64) (err error) {
 	if conn == nil {
 		conn = h.conn
 	}
-	if err = conn.Where("fid = ?", fid).Delete(nil).Error; err != nil {
+	if err = conn.Where("fid IN (?)", fids).Delete(nil).Error; err != nil {
 		logrus.Errorf("Delete Error: %s", err)
 	}
 	return
-}
-
-func (h *FileInfoMySql) MDelete(conn *gorm.DB, fids []int64) (err error) {
-	if conn == nil {
-		conn = h.conn
-	}
-	if err = h.conn.Where("fid IN (?)", fids).Delete(nil).Error; err != nil {
-		logrus.Errorf("MDelete Error: %s", err)
-	}
-	return err
 }
 
 func (h *FileInfoMySql) Get(fid int64) (meta model.File, err error) {

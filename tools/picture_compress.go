@@ -11,21 +11,18 @@ import (
 	"sync"
 )
 
-func ImageCompress(r io.Reader, jpegW, pngW io.Writer, format constdef.ImageFormat) error {
-	var im image.Image
-	var err error
+func DecodeImage(r io.Reader, format constdef.ImageFormat) (image.Image, error) {
 	switch format {
 	case constdef.Jpeg:
-		im, err = JpegDecode(r)
+		return JpegDecode(r)
 	case constdef.Png:
-		im, err = PngDecode(r)
+		return PngDecode(r)
 	default:
-		logrus.Errorf("ImageFormat invalid: %v", format)
-		return fmt.Errorf("invalid ImageFormat: %v", format)
+		return nil, fmt.Errorf("unknown image format: %v", format)
 	}
-	if err != nil {
-		return err
-	}
+}
+
+func ImageCompress(im image.Image, jpegW, pngW io.Writer) error {
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {

@@ -15,13 +15,13 @@ type FileInfoRedis struct {
 }
 
 func NewFileInfoRedis() *FileInfoRedis {
-	h := &FileInfoRedis{}
-	h.conn = redis.NewClient(&redis.Options{
+	r := &FileInfoRedis{}
+	r.conn = redis.NewClient(&redis.Options{
 		Addr:     "10.8.118.15:6379",
 		Password: "",
 		DB:       0,
 	})
-	return h
+	return r
 }
 
 
@@ -29,14 +29,21 @@ func (r *FileInfoRedis) genKey(fid int64) string {
 	return fmt.Sprintf("f%d", fid)
 }
 
+func (r *FileInfoRedis) genKeys(fids []int64) []string {
+	keys := make([]string, len(fids))
+	for i, fid := range fids {
+		keys[i] = r.genKey(fid)
+	}
+	return keys
+}
+
+// 只要获取 redis 失败就认为 cache not found
+// 不管是网络超时还是确实 key 不存在
+// TODO 区分清楚是 redis key 不存在的情况，免得压垮下游
 func (r *FileInfoRedis) Get(fid int64) (meta model.File, err error) {
 	s, err := r.conn.Get(r.genKey(fid)).Result()
-	if err == redis.Nil {
-		logrus.Debugf("redis Get Fid: %d not found", fid)
-		return
-	}
 	if err != nil {
-		logrus.Errorf("redis Get Error: %s", err)
+		logrus.Errorf("redis Get Fid: %d not found", fid)
 		return meta, err
 	}
 	if err = json.NewDecoder(strings.NewReader(s)).Decode(&meta); err != nil {
@@ -46,10 +53,7 @@ func (r *FileInfoRedis) Get(fid int64) (meta model.File, err error) {
 }
 
 func (r *FileInfoRedis) MGet(fids []int64) (metas map[int64]*model.File, missFids []int64, err error) {
-	fidsKey := make([]string, len(fids))
-	for i, fid := range fids {
-		fidsKey[i] = r.genKey(fid)
-	}
+	fidsKey := r.genKeys(fids)
 	result, err := r.conn.MGet(fidsKey...).Result()
 	if err != nil {
 		// redis error
@@ -78,8 +82,9 @@ func (r *FileInfoRedis) MGet(fids []int64) (metas map[int64]*model.File, missFid
 	return metas, missFids, nil
 }
 
-func (r *FileInfoRedis) Del(fid int64) error {
-	if _, err := r.conn.Del(r.genKey(fid)).Result(); err != nil {
+func (r *FileInfoRedis) Del(fids []int64) error {
+	fidsKey := r.genKeys(fids)
+	if _, err := r.conn.Del(fidsKey...).Result(); err != nil {
 		logrus.Errorf("delete redis cache Error: %s", err)
 		return err
 	}

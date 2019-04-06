@@ -1,7 +1,10 @@
 package loader
 
 import (
+	"bytes"
+	"github.com/g10guang/graduation/dal/redis"
 	"github.com/g10guang/graduation/store"
+	"io/ioutil"
 )
 
 const LoaderName_FileContent = "file_content_loader"
@@ -22,6 +25,22 @@ func (l *FileContentLoader) GetName() string {
 	return LoaderName_FileContent
 }
 
+// 先从 redis 缓存中获取，没有再到 HDFS
 func (l *FileContentLoader) Run() (interface{}, error) {
-	return l.storage.Read(l.fid)
+	// redis 非核心逻辑允许失败
+	b, err := redis.ContentRedis.Get(l.fid)
+	if err == nil {
+		return bytes.NewReader(b), nil
+	}
+	r, err := l.storage.Read(l.fid)
+	b, err = ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+	go l.saveRedis(b)
+	return bytes.NewReader(b), nil
+}
+
+func (l *FileContentLoader) saveRedis(b []byte) {
+	redis.ContentRedis.Set(l.fid, b)
 }

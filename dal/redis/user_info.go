@@ -15,13 +15,13 @@ type UserInfoRedis struct {
 }
 
 func NewUserInfoRedis() *UserInfoRedis {
-	h := &UserInfoRedis{}
-	h.conn = redis.NewClient(&redis.Options{
+	r := &UserInfoRedis{}
+	r.conn = redis.NewClient(&redis.Options{
 		Addr:     "10.8.118.15:6379",
 		Password: "",
 		DB:       0,
 	})
-	return h
+	return r
 }
 
 func (r *UserInfoRedis) genKey(uid int64) string {
