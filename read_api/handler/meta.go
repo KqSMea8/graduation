@@ -29,13 +29,13 @@ func NewMetaHandler() *MetaHandler {
 
 func (h *MetaHandler) Handle(ctx context.Context, out http.ResponseWriter, r *http.Request) (err error) {
 	if err = h.parseParams(ctx, r); err != nil {
-		h.genResponse(out, 400)
+		h.genResponse(out, http.StatusBadRequest)
 		return
 	}
 	jobmgr := tools.NewJobMgr(time.Second)
 	jobmgr.AddJob(loader.NewFileMetaLoader(h.Fids))
 	if err = jobmgr.Start(ctx); err != nil {
-		h.genResponse(out, 500)
+		h.genResponse(out, http.StatusInternalServerError)
 		return
 	}
 	if result := jobmgr.GetResult(loader.LoaderName_FileMeta); result.Result != nil {
@@ -45,7 +45,7 @@ func (h *MetaHandler) Handle(ctx context.Context, out http.ResponseWriter, r *ht
 			}
 		}
 	}
-	h.genResponse(out, 200)
+	h.genResponse(out, http.StatusOK)
 	return
 }
 
@@ -74,19 +74,19 @@ func (h *MetaHandler) parseParams(ctx context.Context, r *http.Request) (err err
 }
 
 func (h *MetaHandler) genResponse(out http.ResponseWriter, statusCode int) {
-	if statusCode == 200 {
+	if statusCode == http.StatusOK {
 		b, err := json.Marshal(h.FileMetas)
 		if err != nil {
 			logrus.Errorf("Marshal FileMetas Error: %s", err)
-			out.WriteHeader(500)
+			out.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		if _, err = out.Write(b); err != nil {
 			logrus.Errorf("write http response Error: %s", err)
-			out.WriteHeader(500)
+			out.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		out.WriteHeader(200)
+		out.WriteHeader(http.StatusOK)
 	} else {
 		out.WriteHeader(statusCode)
 	}

@@ -2,8 +2,10 @@ package loader
 
 import (
 	"bytes"
+	"github.com/g10guang/graduation/constdef"
 	"github.com/g10guang/graduation/dal/redis"
 	"github.com/g10guang/graduation/store"
+	"io"
 	"io/ioutil"
 )
 
@@ -12,12 +14,14 @@ const LoaderName_FileContent = "file_content_loader"
 type FileContentLoader struct {
 	fid     int64
 	storage store.Storage
+	format  constdef.ImageFormat
 }
 
-func NewFileContentLoader(fid int64, storage store.Storage) *FileContentLoader {
+func NewFileContentLoader(fid int64, storage store.Storage, format constdef.ImageFormat) *FileContentLoader {
 	return &FileContentLoader{
 		fid:     fid,
 		storage: storage,
+		format:  format,
 	}
 }
 
@@ -32,7 +36,12 @@ func (l *FileContentLoader) Run() (interface{}, error) {
 	if err == nil {
 		return bytes.NewReader(b), nil
 	}
-	r, err := l.storage.Read(l.fid)
+	var r io.Reader
+	if l.format == constdef.InvalidImageFormat {
+		r, err = l.storage.Read(l.fid)
+	} else {
+		r, err = l.storage.ReadWithFormat(l.fid, l.format)
+	}
 	b, err = ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -42,5 +51,9 @@ func (l *FileContentLoader) Run() (interface{}, error) {
 }
 
 func (l *FileContentLoader) saveRedis(b []byte) {
-	redis.ContentRedis.Set(l.fid, b)
+	if l.format != constdef.InvalidImageFormat {
+		redis.ContentRedis.Set(l.fid, b, l.format)
+	} else {
+		redis.ContentRedis.Set(l.fid, b)
+	}
 }

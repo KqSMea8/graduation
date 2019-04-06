@@ -35,16 +35,16 @@ func (h *PostHandler) Handle(ctx context.Context, out http.ResponseWriter, r *ht
 	var err error
 	if err = h.parseParams(ctx, r); err != nil {
 		// 用户参数错误
-		h.genResponse(out, 400)
+		h.genResponse(out, http.StatusBadRequest)
 		return err
 	}
 	h.BuildFileMeta()
 	if err = h.SaveFile(ctx); err != nil {
-		h.genResponse(out, 500)
+		h.genResponse(out, http.StatusInternalServerError)
 		return err
 	}
 	out.Header().Set("fid", strconv.FormatInt(h.FileMeta.Fid, 10))
-	h.genResponse(out, 200)
+	h.genResponse(out, http.StatusOK)
 	return nil
 }
 

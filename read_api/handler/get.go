@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"github.com/g10guang/graduation/constdef"
 	"github.com/g10guang/graduation/model"
 	"github.com/g10guang/graduation/read_api/loader"
 	"github.com/g10guang/graduation/tools"
@@ -14,6 +15,7 @@ import (
 
 type GetHandler struct {
 	*CommonHandler
+	format constdef.ImageFormat
 }
 
 func NewGetHandler() *GetHandler {
@@ -24,7 +26,7 @@ func NewGetHandler() *GetHandler {
 
 func (h *GetHandler) Handle(ctx context.Context, out http.ResponseWriter, r *http.Request) (err error) {
 	if err = h.parseParams(ctx, r); err != nil {
-		h.genResponse(out, 400)
+		h.genResponse(out, http.StatusBadRequest)
 		return err
 	}
 
@@ -32,9 +34,9 @@ func (h *GetHandler) Handle(ctx context.Context, out http.ResponseWriter, r *htt
 	// 2、获取图片二进制内容
 	jobmgr := tools.NewJobMgr(time.Second)
 	jobmgr.AddJob(loader.NewFileMetaLoader([]int64{h.Fid}))
-	jobmgr.AddJob(loader.NewFileContentLoader(h.Fid, storage))
+	jobmgr.AddJob(loader.NewFileContentLoader(h.Fid, storage, h.format))
 	if err = jobmgr.Start(ctx); err != nil {
-		h.genResponse(out, 500)
+		h.genResponse(out, http.StatusInternalServerError)
 		return
 	}
 	if result := jobmgr.GetResult(loader.LoaderName_FileMeta); result.Result != nil {
@@ -50,7 +52,7 @@ func (h *GetHandler) Handle(ctx context.Context, out http.ResponseWriter, r *htt
 	}
 
 	// 返回正常
-	h.genResponse(out, 200)
+	h.genResponse(out, http.StatusOK)
 	return
 }
 
@@ -58,11 +60,21 @@ func (h *GetHandler) parseParams(ctx context.Context, r *http.Request) (err erro
 	if err = h.CommonHandler.parseParams(ctx, r); err != nil {
 		return err
 	}
+	switch r.FormValue(constdef.Param_Format) {
+	case "jpeg":
+		h.format = constdef.Jpeg
+	case "jpeg_water":
+		h.format = constdef.WaterMarkJpeg
+	case "png":
+		h.format = constdef.Png
+	case "png_water":
+		h.format = constdef.WaterMarkPng
+	}
 	return
 }
 
 func (h *GetHandler) genResponse(out http.ResponseWriter, statusCode int) {
-	if statusCode == 200 {
+	if statusCode == http.StatusOK {
 		out.Header().Set("fid", strconv.FormatInt(h.FileMeta.Fid, 10))
 		out.Header().Set("uid", strconv.FormatInt(h.FileMeta.Uid, 10))
 		out.Header().Set("name", h.FileMeta.Name)
@@ -73,9 +85,9 @@ func (h *GetHandler) genResponse(out http.ResponseWriter, statusCode int) {
 		_, err := io.Copy(out, h.FileReader)
 		if err != nil {
 			logrus.Errorf("write file to http response Error: %s", err)
-			out.WriteHeader(500)
-	 	} else {
-	 		out.WriteHeader(200)
+			out.WriteHeader(http.StatusInternalServerError)
+		} else {
+			out.WriteHeader(http.StatusOK)
 		}
 	} else {
 		out.WriteHeader(statusCode)

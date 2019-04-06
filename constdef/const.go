@@ -6,6 +6,9 @@ const (
 	Param_Fid      = "fid"
 	Param_File     = "file"
 	Param_Filename = "filename"
+	Param_Offset   = "offset"
+	Param_Limit    = "limit"
+	Param_Format   = "format"
 )
 
 // OS environment variable key
@@ -25,6 +28,7 @@ const (
 type ImageFormat int16
 
 // 支持的图片格式
+// 由于使用了 iota 所以新增格式只能够在最后追加
 const (
 	InvalidImageFormat ImageFormat = iota
 	Jpeg

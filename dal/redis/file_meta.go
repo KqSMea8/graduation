@@ -122,3 +122,49 @@ func (r *FileInfoRedis) MSet(files []*model.File) error {
 	}
 	return nil
 }
+
+func (r *FileInfoRedis) GetPageCache(uid, offset, limit int64) (metas []*model.File, err error) {
+	key, field := r.genPageKeyField(uid, offset, limit)
+	b, err := r.conn.HGet(key, field).Bytes()
+	if err != nil && err != redis.Nil {
+		logrus.Errorf("redis HGet Error: %s", err)
+		return nil, err
+	}
+
+	if err := json.Unmarshal(b, &metas); err != nil {
+		logrus.Errorf("json Unmarshal Error: %s", err)
+		return nil, err
+	}
+
+	return metas, nil
+}
+
+func (r *FileInfoRedis) SetPageCache(uid, offset, limit int64, metas []*model.File) error {
+	key, field := r.genPageKeyField(uid, offset, limit)
+	b, err := json.Marshal(metas)
+	if err != nil {
+		logrus.Errorf("json Marshal Error: %s", err)
+		return err
+	}
+	if err := r.conn.HSet(key, field, b).Err(); err != nil {
+		logrus.Errorf("redis HSet Error: %s", err)
+		return err
+	}
+	return nil
+}
+
+func (r *FileInfoRedis) DelPageCache(uid int64) error {
+	key, _ := r.genPageKeyField(uid, 0, 0)
+	if err := r.conn.Del(key).Err(); err != nil {
+		logrus.Errorf("redis Del uid: %d page cache Error: %s", uid, err)
+		return err
+	}
+	return nil
+}
+
+func (r *FileInfoRedis) genPageKeyField(uid, offset, limit int64) (key, field string) {
+	key = fmt.Sprintf("p_%d", uid)
+	field = fmt.Sprintf("%d_%d", offset, limit)
+	return
+}
+

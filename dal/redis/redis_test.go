@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"fmt"
 	"github.com/g10guang/graduation/model"
 	"github.com/go-redis/redis"
 	"github.com/pkg/errors"
@@ -98,7 +99,7 @@ func TestMGet(t *testing.T) {
 }
 
 func TestBytes(t *testing.T) {
-	r, err := ContentRedis.conn.Set("hello", []byte{10, 0, 0, 10, 0}, time.Second * 100).Result()
+	r, err := ContentRedis.conn.Set("hello", []byte{10, 0, 0, 10, 0}, time.Second*100).Result()
 	if err != nil {
 		panic(err)
 	}
@@ -108,4 +109,14 @@ func TestBytes(t *testing.T) {
 		panic(err)
 	}
 	logrus.Infof("redis response: %v", p)
+}
+
+func TestBytes2(t *testing.T) {
+	FileRedis.conn.Set("hello", []byte{0, 10, 0, 0, 1, 0}, time.Hour)
+	result, err := FileRedis.conn.MGet("hello", "world").Result()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%+v\n%+v", result[0], result[1])
+	fmt.Printf("%T\t%T", result[0], result[1])
 }

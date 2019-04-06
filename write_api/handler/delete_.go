@@ -28,14 +28,14 @@ func NewDeleteHandler() *DeleteHandler {
 
 func (h *DeleteHandler) Handle(ctx context.Context, out http.ResponseWriter, r *http.Request) (err error) {
 	if err = h.parseParams(ctx, r); err != nil {
-		h.genResponse(out, 400)
+		h.genResponse(out, http.StatusBadRequest)
 		return err
 	}
 	if err = h.delete_(ctx); err != nil {
-		h.genResponse(out, 500)
+		h.genResponse(out, http.StatusInternalServerError)
 		return err
 	}
-	h.genResponse(out, 200)
+	h.genResponse(out, http.StatusOK)
 	return nil
 }
 

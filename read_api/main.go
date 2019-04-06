@@ -23,6 +23,7 @@ func main() {
 func initHttpHandler() {
 	http.HandleFunc("/get", get)
 	http.HandleFunc("/meta", meta)
+	http.HandleFunc("/userFile", userFile)
 }
 
 func get(out http.ResponseWriter, r *http.Request) {
@@ -30,9 +31,8 @@ func get(out http.ResponseWriter, r *http.Request) {
 	h := handler.NewGetHandler()
 	err := h.Handle(ctx, out, r)
 	if err != nil {
-		logrus.Errorf("get Error: %s", err.Error())
+		logrus.Errorf("get Error: %s", err)
 	}
-
 }
 
 func meta(out http.ResponseWriter, r *http.Request) {
@@ -40,6 +40,15 @@ func meta(out http.ResponseWriter, r *http.Request) {
 	h := handler.NewMetaHandler()
 	err := h.Handle(ctx, out, r)
 	if err != nil {
-		logrus.Errorf("head Error: %s", err.Error())
+		logrus.Errorf("head Error: %s", err)
+	}
+}
+
+func userFile(out http.ResponseWriter, r *http.Request) {
+	ctx := tools.NewCtxWithLogID()
+	h := handler.NewUserFileHandler()
+	err := h.Handle(ctx, out, r)
+	if err != nil {
+		logrus.Errorf("userFile Error: %s", err)
 	}
 }

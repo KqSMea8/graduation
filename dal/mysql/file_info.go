@@ -86,3 +86,10 @@ func (h *FileInfoMySql) UpdateMd5(fid int64, md5 string) error {
 	}
 	return nil
 }
+
+func (h *FileInfoMySql) GetFileByUid(uid, offset, limit int64) (files []*model.File, err error) {
+	if err = h.conn.Where("uid = ?", uid).Offset(offset).Limit(limit).Find(&files).Error; err != nil {
+		logrus.Errorf("GetFileByUid Error: %s", err)
+	}
+	return
+}

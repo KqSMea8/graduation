@@ -2,6 +2,7 @@ package redis
 
 import (
 	"fmt"
+	"github.com/g10guang/graduation/constdef"
 	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"
 	"time"
@@ -22,28 +23,31 @@ func NewFileContentRedis() *FileContentRedis {
 	return r
 }
 
-func (r *FileContentRedis) genKey(fid int64) string {
+func (r *FileContentRedis) genKey(fid int64, format ...constdef.ImageFormat) string {
+	if len(format) > 0 {
+		return fmt.Sprintf("c_%d_%d", fid, format)
+	}
 	return fmt.Sprintf("c_%d", fid)
 }
 
-func (r *FileContentRedis) genKeys(fids []int64) []string {
+func (r *FileContentRedis) genKeys(fids []int64, format ...constdef.ImageFormat) []string {
 	keys := make([]string, len(fids))
 	for i, fid := range fids {
-		keys[i] = r.genKey(fid)
+		keys[i] = r.genKey(fid, format...)
 	}
 	return keys
 }
 
-func (r *FileContentRedis) Set(fid int64, data []byte) error {
-	if _, err := r.conn.Set(r.genKey(fid), data, time.Minute).Result(); err != nil {
+func (r *FileContentRedis) Set(fid int64, data []byte, format ...constdef.ImageFormat) error {
+	if _, err := r.conn.Set(r.genKey(fid, format...), data, time.Minute).Result(); err != nil {
 		logrus.Errorf("redis Set fid %d content Error: %s", fid, err)
 		return err
 	}
 	return nil
 }
 
-func (r *FileContentRedis) Get(fid int64) ([]byte, error) {
-	b, err := r.conn.Get(r.genKey(fid)).Bytes()
+func (r *FileContentRedis) Get(fid int64, format ...constdef.ImageFormat) ([]byte, error) {
+	b, err := r.conn.Get(r.genKey(fid, format...)).Bytes()
 	if err != nil {
 		logrus.Errorf("redis Get fid %d content Error: %s", fid, err)
 		return nil, err
@@ -51,8 +55,8 @@ func (r *FileContentRedis) Get(fid int64) ([]byte, error) {
 	return b, nil
 }
 
-func (r *FileContentRedis) Del(fids []int64) error {
-	if err := r.conn.Del(r.genKeys(fids)...).Err(); err != nil {
+func (r *FileContentRedis) Del(fids []int64, format ...constdef.ImageFormat) error {
+	if err := r.conn.Del(r.genKeys(fids, format...)...).Err(); err != nil {
 		logrus.Errorf("redis Del fids: %v content Error: %s", fids, err)
 		return err
 	}
