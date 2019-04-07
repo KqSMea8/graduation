@@ -24,10 +24,10 @@ func NewFileContentRedis() *FileContentRedis {
 }
 
 func (r *FileContentRedis) genKey(fid int64, format ...constdef.ImageFormat) string {
-	if len(format) > 0 {
-		return fmt.Sprintf("c_%d_%d", fid, format)
+	if len(format) == 0 || format[0] == constdef.InvalidImageFormat {
+		return fmt.Sprintf("c_%d", fid)
 	}
-	return fmt.Sprintf("c_%d", fid)
+	return fmt.Sprintf("c_%d_%d", fid, format[0])
 }
 
 func (r *FileContentRedis) genKeys(fids []int64, format ...constdef.ImageFormat) []string {

@@ -3,7 +3,6 @@ package store
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"github.com/g10guang/graduation/constdef"
 	"github.com/sirupsen/logrus"
 	"io"
@@ -14,6 +13,7 @@ import (
 
 // concurrency safe
 type LocalStorage struct {
+	*commonStorage
 	dirPath string
 }
 
@@ -29,18 +29,19 @@ func NewLocalStorage() *LocalStorage {
 		}
 	}
 	h := &LocalStorage{
+		commonStorage: &commonStorage{dirPath: dir},
 		dirPath: dir,
 	}
 	return h
 }
 
-func (h *LocalStorage) Write(fid int64, reader io.Reader) error {
-	filePath := h.genFilePath(fid)
+func (h *LocalStorage) Write(fid int64, reader io.Reader, format ...constdef.ImageFormat) error {
+	filePath := h.genFilePath(fid, format...)
 	return h.write(filePath, reader)
 }
 
-func (h *LocalStorage) Read(fid int64) (reader io.Reader, err error) {
-	filePath := h.genFilePath(fid)
+func (h *LocalStorage) Read(fid int64, format ...constdef.ImageFormat) (reader io.Reader, err error) {
+	filePath := h.genFilePath(fid, format...)
 	return h.read(filePath)
 }
 
@@ -51,16 +52,6 @@ func (h *LocalStorage) Delete(fid int64) error {
 		go os.Remove(h.genFilePath(fid, f))
 	}
 	return nil
-}
-
-func (h *LocalStorage) WriteWithFormat(fid int64, format constdef.ImageFormat, reader io.Reader) error {
-	filepath := h.genFilePath(fid, format)
-	return h.write(filepath, reader)
-}
-
-func (h *LocalStorage) ReadWithFormat(fid int64, format constdef.ImageFormat) (reader io.Reader, err error) {
-	filepath := h.genFilePath(fid, format)
-	return h.read(filepath)
 }
 
 func (h *LocalStorage) write(path string, reader io.Reader) error {
@@ -82,16 +73,4 @@ func (h *LocalStorage) read(path string) (io.Reader, error) {
 		logrus.Errorf("read %s Error: %s", path, err)
 	}
 	return bytes.NewReader(b), err
-}
-
-func (h *LocalStorage) genFileName(fid int64, format ...constdef.ImageFormat) string {
-	if len(format) == 0 {
-		return fmt.Sprintf("%d", fid)
-	} else {
-		return fmt.Sprintf("%d_%d", fid, format[0])
-	}
-}
-
-func (h *LocalStorage) genFilePath(fid int64, format ...constdef.ImageFormat) string {
-	return path.Join(h.dirPath, h.genFileName(fid, format...))
 }

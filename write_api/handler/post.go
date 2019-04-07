@@ -74,10 +74,8 @@ func (h *PostHandler) SaveFile(ctx context.Context) (err error) {
 		} else {
 			logrus.Debugf("post mysql commit")
 			db.Commit()
-			// 最后发送消息不能够并行，不然会增大消费者处理难度
-			if err = h.PublishPostFileEvent(); err != nil {
-				logrus.Errorf("Send Nsq Error: %s", err)
-			}
+			// 异步发送消息队列
+			go h.PublishPostFileEvent()
 		}
 	}()
 

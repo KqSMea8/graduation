@@ -5,7 +5,6 @@ import (
 	"github.com/g10guang/graduation/constdef"
 	"github.com/g10guang/graduation/dal/redis"
 	"github.com/g10guang/graduation/store"
-	"io"
 	"io/ioutil"
 )
 
@@ -32,16 +31,11 @@ func (l *FileContentLoader) GetName() string {
 // 先从 redis 缓存中获取，没有再到 HDFS
 func (l *FileContentLoader) Run() (interface{}, error) {
 	// redis 非核心逻辑允许失败
-	b, err := redis.ContentRedis.Get(l.fid)
+	b, err := redis.ContentRedis.Get(l.fid, l.format)
 	if err == nil {
 		return bytes.NewReader(b), nil
 	}
-	var r io.Reader
-	if l.format == constdef.InvalidImageFormat {
-		r, err = l.storage.Read(l.fid)
-	} else {
-		r, err = l.storage.ReadWithFormat(l.fid, l.format)
-	}
+	r, err := l.storage.Read(l.fid, l.format)
 	b, err = ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -51,9 +45,5 @@ func (l *FileContentLoader) Run() (interface{}, error) {
 }
 
 func (l *FileContentLoader) saveRedis(b []byte) {
-	if l.format != constdef.InvalidImageFormat {
-		redis.ContentRedis.Set(l.fid, b, l.format)
-	} else {
-		redis.ContentRedis.Set(l.fid, b)
-	}
+	redis.ContentRedis.Set(l.fid, b, l.format)
 }

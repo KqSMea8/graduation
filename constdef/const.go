@@ -37,7 +37,7 @@ const (
 	WaterMarkPng
 )
 
-var ImageFormatList = []ImageFormat{Jpeg, Png}
+var ImageFormatList = []ImageFormat{Jpeg, Png, WaterMarkJpeg, WaterMarkPng}
 
 // NSQ 配置信息
 const (

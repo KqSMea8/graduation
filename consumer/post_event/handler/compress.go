@@ -13,7 +13,6 @@ import (
 	"image"
 	"image/draw"
 	"io"
-	"strconv"
 	"strings"
 	"sync"
 )
@@ -100,10 +99,10 @@ func (h *CompressHandler) DecodeImage(ctx context.Context, r io.Reader, format c
 
 func (h *CompressHandler) AddWaterMark(ctx context.Context, im image.Image) error {
 	dim, ok := im.(draw.Image)
-	if !ok {
+	if !ok || dim == nil {
 		return fmt.Errorf("cannot convert image.Image to draw.Image")
 	}
-	tools.WaterMark(dim, strconv.FormatInt(h.msg.Uid, 10))
+	tools.WaterMark(dim,fmt.Sprintf("uid=%d", h.msg.Uid))
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
@@ -136,7 +135,7 @@ func (h *CompressHandler) ImageStore(im image.Image, format constdef.ImageFormat
 		logrus.Errorf("Image format: %v Encode: %s", format, err)
 		return err
 	}
-	if err := storage.WriteWithFormat(h.msg.Fid, format, buf); err != nil {
+	if err := storage.Write(h.msg.Fid, buf, format); err != nil {
 		logrus.Errorf("storage write format: %v Error: %s", format, err)
 		return err
 	}

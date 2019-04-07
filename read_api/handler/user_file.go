@@ -14,7 +14,6 @@ import (
 )
 
 // 按照 uid 纬度获取文件信息，支持分页功能
-// 为了实现简单，只是返回 fid
 type UserFileHandler struct {
 	*CommonHandler
 	uid       int64

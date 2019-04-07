@@ -24,7 +24,6 @@ func NewFileInfoRedis() *FileInfoRedis {
 	return r
 }
 
-
 func (r *FileInfoRedis) genKey(fid int64) string {
 	return fmt.Sprintf("f%d", fid)
 }
@@ -113,7 +112,7 @@ func (r *FileInfoRedis) MSet(files []*model.File) error {
 			logrus.Errorf("json Marshal Error: %s", err)
 			continue
 		}
-		pipe.Set(r.genKey(meta.Fid), string(b), time.Minute * 5)
+		pipe.Set(r.genKey(meta.Fid), string(b), time.Minute*5)
 	}
 	_, err := pipe.Exec()
 	if err != nil {
@@ -123,10 +122,12 @@ func (r *FileInfoRedis) MSet(files []*model.File) error {
 	return nil
 }
 
+// 注意 Get Set 都是设置的 []byte 而不是 string
+// 因为接口返回的是 interface{} 类型，需要注意类型
 func (r *FileInfoRedis) GetPageCache(uid, offset, limit int64) (metas []*model.File, err error) {
 	key, field := r.genPageKeyField(uid, offset, limit)
 	b, err := r.conn.HGet(key, field).Bytes()
-	if err != nil && err != redis.Nil {
+	if err != nil {
 		logrus.Errorf("redis HGet Error: %s", err)
 		return nil, err
 	}
@@ -167,4 +168,3 @@ func (r *FileInfoRedis) genPageKeyField(uid, offset, limit int64) (key, field st
 	field = fmt.Sprintf("%d_%d", offset, limit)
 	return
 }
-

@@ -66,6 +66,7 @@ func (h *MetaHandler) parseParams(ctx context.Context, r *http.Request) (err err
 		logrus.Errorf("empty meta fids")
 		return errors.New("empty fids")
 	}
+	// 对于过长的请求做截断
 	if len(h.Fids) > 100 {
 		logrus.Errorf("too much fids len=%d", len(h.Fids))
 		return fmt.Errorf("too much fids len=%s", len(h.Fids))

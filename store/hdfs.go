@@ -1,18 +1,15 @@
 package store
 
 import (
-	"fmt"
 	"github.com/g10guang/graduation/constdef"
 	"github.com/sirupsen/logrus"
 	"github.com/vladimirvivien/gowfs"
 	"io"
-	"path"
-	"strconv"
 )
 
 type HdfsStorage struct {
+	*commonStorage
 	client *gowfs.FileSystem
-	dir    string
 }
 
 func NewHdfsStorage(webhdfsAddr, user, dir string) *HdfsStorage {
@@ -21,29 +18,19 @@ func NewHdfsStorage(webhdfsAddr, user, dir string) *HdfsStorage {
 		panic(err)
 	}
 	s := &HdfsStorage{
+		commonStorage: &commonStorage{dirPath: dir},
 		client: webgowfsClient,
-		dir:    dir,
 	}
 	return s
 }
 
-func (s *HdfsStorage) Write(fid int64, reader io.Reader) error {
-	filePath := s.genFilePath(fid)
+func (s *HdfsStorage) Write(fid int64, reader io.Reader, format ...constdef.ImageFormat) error {
+	filePath := s.genFilePath(fid, format...)
 	return s.write(filePath, reader)
 }
 
-func (s *HdfsStorage) WriteWithFormat(fid int64, format constdef.ImageFormat, reader io.Reader) error {
-	filePath := s.genFilePath(fid, format)
-	return s.write(filePath, reader)
-}
-
-func (s *HdfsStorage) Read(fid int64) (io.Reader, error) {
-	filePath := s.genFilePath(fid)
-	return s.read(filePath)
-}
-
-func (s *HdfsStorage) ReadWithFormat(fid int64, format constdef.ImageFormat) (io.Reader, error) {
-	filePath := s.genFilePath(fid, format)
+func (s *HdfsStorage) Read(fid int64, format ...constdef.ImageFormat) (io.Reader, error) {
+	filePath := s.genFilePath(fid, format...)
 	return s.read(filePath)
 }
 
@@ -87,13 +74,3 @@ func (s *HdfsStorage) delete_(filePath string) error {
 	return nil
 }
 
-func (s *HdfsStorage) genFileName(fid int64, format ...constdef.ImageFormat) string {
-	if len(format) == 0 {
-		return strconv.FormatInt(fid, 10)
-	}
-	return fmt.Sprintf("%d_%d", fid, format[0])
-}
-
-func (s *HdfsStorage) genFilePath(fid int64, format ...constdef.ImageFormat) string {
-	return path.Join(s.dir, s.genFileName(fid, format...))
-}
