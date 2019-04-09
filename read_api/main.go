@@ -9,9 +9,6 @@ import (
 
 func main() {
 	tools.InitLog()
-	// TODO remove me
-	logrus.SetLevel(logrus.DebugLevel)
-	logrus.SetReportCaller(true)
 	var err error
 	initHttpHandler()
 	if err = http.ListenAndServe("0.0.0.0:10002", nil); err != nil {

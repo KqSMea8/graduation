@@ -11,9 +11,12 @@ func IsProductEnv() bool {
 	return exists
 }
 
+// TODO 修改日志
 func InitLog() {
-	if !IsProductEnv() {
-		logrus.SetLevel(logrus.DebugLevel)
-		logrus.SetReportCaller(true)
-	}
+	//if !IsProductEnv() {
+	//	logrus.SetLevel(logrus.DebugLevel)
+	//	logrus.SetReportCaller(true)
+	//}
+	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetReportCaller(true)
 }

@@ -69,3 +69,4 @@ func PngDecode(r io.Reader) (im image.Image, err error) {
 	}
 	return
 }
+

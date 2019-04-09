@@ -11,7 +11,7 @@ type commonStorage struct {
 }
 
 func (*commonStorage) genFileName(fid int64, format ...constdef.ImageFormat) string {
-	if len(format) == 0 {
+	if len(format) == 0 || format[0] == constdef.InvalidImageFormat {
 		return fmt.Sprintf("%d", fid)
 	} else {
 		return fmt.Sprintf("%d_%d", fid, format[0])

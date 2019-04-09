@@ -17,17 +17,20 @@ type StoreFileJob struct {
 func NewStoreFileJob(fid int64, reader io.Reader, storage store.Storage) *StoreFileJob {
 	j := &StoreFileJob{
 		fid:     fid,
-		reader: reader,
+		reader:  reader,
 		storage: storage,
 	}
 	return j
 }
 
 func (j *StoreFileJob) GetName() string {
-	return JobName_SaveFileMeta
+	return JobName_StoreFile
 }
 
 func (j *StoreFileJob) Run() (interface{}, error) {
+	defer func() {
+		logrus.Debugf("job: %s exit", j.GetName())
+	}()
 	if err := j.storage.Write(j.fid, j.reader); err != nil {
 		logrus.Errorf("Persistent File Error: %s", err)
 		return nil, err

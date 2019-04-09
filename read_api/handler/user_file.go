@@ -15,7 +15,6 @@ import (
 
 // 按照 uid 纬度获取文件信息，支持分页功能
 type UserFileHandler struct {
-	*CommonHandler
 	uid       int64
 	offset    int64
 	limit     int64
@@ -23,7 +22,7 @@ type UserFileHandler struct {
 }
 
 func NewUserFileHandler() *UserFileHandler {
-	h := &UserFileHandler{}
+	h := new(UserFileHandler)
 	return h
 }
 
@@ -50,10 +49,6 @@ func (h *UserFileHandler) Handle(ctx context.Context, out http.ResponseWriter, r
 }
 
 func (h *UserFileHandler) parseParams(ctx context.Context, r *http.Request) (err error) {
-	if err = h.CommonHandler.parseParams(ctx, r); err != nil {
-		return err
-	}
-
 	h.offset, err = strconv.ParseInt(r.FormValue(constdef.Param_Offset), 10, 64)
 	if h.limit, err = strconv.ParseInt(r.FormValue(constdef.Param_Limit), 10, 64); err != nil {
 		h.limit = 10

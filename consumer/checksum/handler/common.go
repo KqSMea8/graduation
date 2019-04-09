@@ -9,9 +9,11 @@ import (
 var storage store.Storage
 
 func init() {
-	if tools.IsProductEnv() {
-		storage = store.NewHdfsStorage(constdef.WebHdfsAddr, constdef.WebHdfsUser, constdef.WebHdfsDir)
-	} else {
-		storage = store.NewLocalStorage()
-	}
+	tools.InitLog()
+	//if tools.IsProductEnv() {
+	//	storage = store.NewHdfsStorage(constdef.WebHdfsAddr, constdef.WebHdfsUser, constdef.WebHdfsDir)
+	//} else {
+	//	storage = store.NewLocalStorage()
+	//}
+	storage = store.NewHdfsStorage(constdef.WebHdfsAddr, constdef.WebHdfsUser, constdef.WebHdfsDir)
 }

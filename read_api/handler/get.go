@@ -32,12 +32,12 @@ func (h *GetHandler) Handle(ctx context.Context, out http.ResponseWriter, r *htt
 
 	// 1、获取图片元信息
 	// 2、获取图片二进制内容
-	jobmgr := tools.NewJobMgr(time.Second)
+	jobmgr := tools.NewJobMgr(time.Second * 3)
 	jobmgr.AddJob(loader.NewFileMetaLoader([]int64{h.Fid}))
 	jobmgr.AddJob(loader.NewFileContentLoader(h.Fid, storage, h.format))
 	if err = jobmgr.Start(ctx); err != nil {
 		h.genResponse(out, http.StatusInternalServerError)
-		return
+		return err
 	}
 	if result := jobmgr.GetResult(loader.LoaderName_FileMeta); result.Result != nil {
 		if v, ok := result.Result.(map[int64]*model.File); ok {
@@ -53,7 +53,7 @@ func (h *GetHandler) Handle(ctx context.Context, out http.ResponseWriter, r *htt
 
 	// 返回正常
 	h.genResponse(out, http.StatusOK)
-	return
+	return nil
 }
 
 func (h *GetHandler) parseParams(ctx context.Context, r *http.Request) (err error) {

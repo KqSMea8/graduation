@@ -2,23 +2,23 @@ package tools
 
 import (
 	"fmt"
-	"image/draw"
-	"image/png"
+	"image/jpeg"
 	"os"
 	"testing"
 )
 
 func TestWaterMark(t *testing.T) {
-	fp, err := os.Open("/Users/g10guang/Public/output.png")
+	fp, err := os.Open("/Users/g10guang/Public/output.jpeg")
 	if err != nil {
 		panic(err)
 	}
-	//im, err := jpeg.Decode(fp)
-	im, err := png.Decode(fp)
+	im, err := jpeg.Decode(fp)
+	//im, err := png.Decode(fp)
 	if err != nil {
 		panic(err)
 	}
-	if dim, ok := im.(draw.Image); ok {
+	dim := ConvertImage2Draw(im)
+	if dim == nil {
 		fmt.Printf("convert ok")
 		WaterMark(dim, "g10guang")
 	} else {

@@ -79,7 +79,7 @@ func (h *PostHandler) SaveFile(ctx context.Context) (err error) {
 		}
 	}()
 
-	jobmgr := tools.NewJobMgr(time.Second)
+	jobmgr := tools.NewJobMgr(time.Second * 3)
 	jobmgr.AddJob(jobs.NewSaveFileMetaJob(h.FileMeta, db))
 	jobmgr.AddJob(jobs.NewStoreFileJob(h.FileMeta.Fid, h.File, storage))
 	if err = jobmgr.Start(ctx); err != nil {

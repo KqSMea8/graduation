@@ -45,7 +45,7 @@ func (j *DeleteFileMetaJob) Run() (interface{}, error) {
 		return nil, err
 	}
 
-	if err= redis.FileRedis.Del(j.fids); err != nil {
+	if err = redis.FileRedis.Del(j.fids); err != nil {
 		return nil, err
 	}
 	return nil, nil

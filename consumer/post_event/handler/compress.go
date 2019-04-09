@@ -11,7 +11,6 @@ import (
 	"github.com/g10guang/graduation/tools"
 	"github.com/sirupsen/logrus"
 	"image"
-	"image/draw"
 	"io"
 	"strings"
 	"sync"
@@ -98,11 +97,16 @@ func (h *CompressHandler) DecodeImage(ctx context.Context, r io.Reader, format c
 }
 
 func (h *CompressHandler) AddWaterMark(ctx context.Context, im image.Image) error {
-	dim, ok := im.(draw.Image)
-	if !ok || dim == nil {
+	if im == nil {
+		panic(nil)
+	}
+	dim := tools.ConvertImage2Draw(im)
+	if dim == nil {
+		logrus.Errorf("cannot convert image.Image to draw.Image")
 		return fmt.Errorf("cannot convert image.Image to draw.Image")
 	}
-	tools.WaterMark(dim,fmt.Sprintf("uid=%d", h.msg.Uid))
+	logrus.Debugf("Add Water Mark Fid: %d", h.msg.Fid)
+	tools.WaterMark(dim, fmt.Sprintf("uid=%d", h.msg.Uid))
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {

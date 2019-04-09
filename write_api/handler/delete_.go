@@ -60,7 +60,7 @@ func (h *DeleteHandler) parseParams(ctx context.Context, r *http.Request) (err e
 }
 
 func (h *DeleteHandler) delete_(ctx context.Context) (err error) {
-	jobmgr := tools.NewJobMgr(time.Second)
+	jobmgr := tools.NewJobMgr(time.Second * 2)
 	jobmgr.AddJob(jobs.NewDeleteFileMetaJob(h.Fids))
 	if err := jobmgr.Start(ctx); err != nil {
 		logrus.Errorf("delete fids job exec Error: %s", err)
@@ -79,6 +79,7 @@ func (h *DeleteHandler) PublishDeleteEvent(ctx context.Context) (err error) {
 			Timestamp: time.Now().Unix(),
 		}
 		b, _ := json.Marshal(msg)
+		logrus.Debugf("topic: %s publish msg: %s", constdef.DeleteFileEventTopic, string(b))
 		if err = mq.PublishNsq(constdef.DeleteFileEventTopic, b); err != nil {
 			logrus.Errorf("Publish Delete Event Error: %s", err)
 		}

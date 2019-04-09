@@ -4,6 +4,7 @@ import (
 	"github.com/g10guang/graduation/dal/mysql"
 	"github.com/g10guang/graduation/dal/redis"
 	"github.com/g10guang/graduation/model"
+	"github.com/sirupsen/logrus"
 )
 
 const LoaderName_UserFile = "user_file_loader"
@@ -30,15 +31,15 @@ func (l *UserFileLoader) GetName() string {
 func (l *UserFileLoader) Run() (interface{}, error) {
 	metas, err := redis.FileRedis.GetPageCache(l.uid, l.offset, l.limit)
 	if err == nil && metas != nil {
+		logrus.Debugf("userFile page uid: %d offset: %d limit: %d cache hit", l.uid, l.offset, l.limit)
 		return metas, nil
 	}
-
 	fileMetas, err := mysql.FileMySQL.GetFileByUid(l.uid, l.offset, l.limit)
 	if err != nil {
 		return nil, err
 	}
 
-	go l.saveRedisCache(metas)
+	go l.saveRedisCache(fileMetas)
 	return fileMetas, nil
 }
 

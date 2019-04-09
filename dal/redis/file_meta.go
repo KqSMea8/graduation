@@ -142,13 +142,17 @@ func (r *FileInfoRedis) GetPageCache(uid, offset, limit int64) (metas []*model.F
 
 func (r *FileInfoRedis) SetPageCache(uid, offset, limit int64, metas []*model.File) error {
 	key, field := r.genPageKeyField(uid, offset, limit)
-	b, err := json.Marshal(metas)
+	b, err := json.Marshal(&metas)
 	if err != nil {
 		logrus.Errorf("json Marshal Error: %s", err)
 		return err
 	}
 	if err := r.conn.HSet(key, field, b).Err(); err != nil {
 		logrus.Errorf("redis HSet Error: %s", err)
+		return err
+	}
+	if err = r.conn.Expire(key, time.Minute).Err(); err != nil {
+		logrus.Errorf("redis expire page cache Error: %s", err)
 		return err
 	}
 	return nil
