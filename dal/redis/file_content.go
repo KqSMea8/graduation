@@ -2,10 +2,11 @@ package redis
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/g10guang/graduation/constdef"
 	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"
-	"time"
 )
 
 // 图片内容的缓存
@@ -16,7 +17,7 @@ type FileContentRedis struct {
 func NewFileContentRedis() *FileContentRedis {
 	r := &FileContentRedis{}
 	r.conn = redis.NewClient(&redis.Options{
-		Addr:     "10.8.118.15:6379",
+		Addr:     "10.224.12.131:6379",
 		Password: "",
 		DB:       1,
 	})

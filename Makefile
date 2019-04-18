@@ -9,12 +9,12 @@ all:
 	make read_api
 
 write_api:
-	go run write_api/main.go &
+	cd write_api && go build && docker build .
 
 read_api:
-	go run read_api/main.go &
+	cd read_api && go build && docker build .
 
 consumer:
-	go run consumer/post_event/main.go &
-	go run consumer/delete_event/main.go &
-	go run consumer/checksum/main.go &
+	cd consumer/checksum && go build && docker build .
+	cd consumer/delete_event && go build && docker build .
+	cd consumer/post_event && go build && docker build .

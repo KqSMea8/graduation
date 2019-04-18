@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"errors"
+
 	"github.com/g10guang/graduation/model"
 	"github.com/g10guang/graduation/tools"
 	"github.com/jinzhu/gorm"
@@ -30,7 +31,7 @@ func NewFileInfoMySql() *FileInfoMySql {
 }
 
 func getFileInfoMySql() (string, string) {
-	return "mysql", "g10guang:hello@tcp(10.8.118.15:3306)/oss_meta?charset=utf8mb4&parseTime=True&loc=Local"
+	return "mysql", "g10guang:hello@tcp(10.224.12.131:3306)/oss_meta?charset=utf8mb4&parseTime=True&loc=Local"
 }
 
 // 写需要涉及到事务，所以由外部传递 connection

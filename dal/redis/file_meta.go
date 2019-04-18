@@ -3,11 +3,12 @@ package redis
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/g10guang/graduation/model"
 	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"
-	"strings"
-	"time"
 )
 
 type FileInfoRedis struct {
@@ -17,7 +18,7 @@ type FileInfoRedis struct {
 func NewFileInfoRedis() *FileInfoRedis {
 	r := &FileInfoRedis{}
 	r.conn = redis.NewClient(&redis.Options{
-		Addr:     "10.8.118.15:6379",
+		Addr:     "10.224.12.131:6379",
 		Password: "",
 		DB:       0,
 	})

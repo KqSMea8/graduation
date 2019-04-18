@@ -41,13 +41,13 @@ var ImageFormatList = []ImageFormat{Jpeg, Png, WaterMarkJpeg, WaterMarkPng}
 
 // NSQ 配置信息
 const (
-	NsqLookupdAddr = "10.8.118.15:4161"
-	NsqdAddr       = "10.8.118.15:4150"
+	NsqLookupdAddr = "10.224.12.131:4161"
+	NsqdAddr       = "10.224.12.131:4150"
 )
 
 // HDFS 配置
 const (
-	WebHdfsAddr = "10.8.118.15:50070"
+	WebHdfsAddr = "10.224.12.131:50070"
 	WebHdfsUser = "root"
 	WebHdfsDir  = "/oss/image"
 )

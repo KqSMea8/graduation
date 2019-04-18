@@ -28,7 +28,7 @@ func NewUserInfoMySql() *UserInfoMySql {
 }
 
 func getUserInfoMySqlConfig() (string, string) {
-	return "mysql", "g10guang:hello@tcp(10.8.118.15:3306)/oss_meta?charset=utf8mb4&parseTime=True&loc=Local"
+	return "mysql", "g10guang:hello@tcp(10.224.12.131:3306)/oss_meta?charset=utf8mb4&parseTime=True&loc=Local"
 }
 
 func (h *UserInfoMySql) Save(conn *gorm.DB, user *model.User) (err error) {
