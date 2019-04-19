@@ -3,8 +3,6 @@ FROM golang:1.11-alpine
 RUN mkdir -p /go/src/github.com/g10guang/graduation/consumer/checksum
 COPY ./checksum /go/src/github.com/g10guang/graduation/consumer/checksum
 
-FROM alpine:3.7
-
 EXPOSE 10002
 
 WORKDIR /go/src/github.com/g10guang/graduation/consumer/checksum
