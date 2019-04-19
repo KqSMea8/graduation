@@ -9,4 +9,6 @@ EXPOSE 10002
 
 WORKDIR /go/src/github.com/g10guang/graduation/consumer/delete_event
 
-CMD ["./delete_event"]
+ENV PATH="${PATH}:/go/src/github.com/g10guang/graduation/consumer/delete_event"
+
+CMD delete_event

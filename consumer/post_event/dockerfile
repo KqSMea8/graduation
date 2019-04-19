@@ -9,4 +9,6 @@ EXPOSE 10002
 
 WORKDIR /go/src/github.com/g10guang/graduation/consumer/post_event
 
-CMD ["./post_event"]
+ENV PATH="${PATH}:/go/src/github.com/g10guang/graduation/consumer/post_event"
+
+CMD post_event

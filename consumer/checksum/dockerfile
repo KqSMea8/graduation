@@ -9,4 +9,6 @@ EXPOSE 10002
 
 WORKDIR /go/src/github.com/g10guang/graduation/consumer/checksum
 
-CMD ["./checksum"]
+ENV PATH="${PATH}:/go/src/github.com/g10guang/graduation/consumer/checksum"
+
+CMD checksum

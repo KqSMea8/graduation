@@ -7,4 +7,6 @@ EXPOSE 10003
 
 WORKDIR /go/src/github.com/g10guang/graduation/write_api
 
-CMD ["write_api]
+ENV PATH="${PATH}:/go/src/github.com/g10guang/graduation/write_api"
+
+CMD write_api
