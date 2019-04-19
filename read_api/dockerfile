@@ -1,0 +1,12 @@
+FROM golang:1.11-alpine
+
+RUN mkdir -p /go/src/github.com/g10guang/graduation/read_api
+COPY ./write_api /go/src/github.com/g10guang/graduation/read_api
+
+FROM alpine:3.7
+
+EXPOSE 10002
+
+WORKDIR /go/src/github.com/g10guang/graduation/read_api
+
+CMD ["./read_api"]
