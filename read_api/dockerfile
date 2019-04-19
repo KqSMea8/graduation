@@ -1,7 +1,7 @@
 FROM golang:1.11-alpine
 
 RUN mkdir -p /go/src/github.com/g10guang/graduation/read_api
-COPY ./write_api /go/src/github.com/g10guang/graduation/read_api
+COPY ./read_api /go/src/github.com/g10guang/graduation/read_api
 
 FROM alpine:3.7
 

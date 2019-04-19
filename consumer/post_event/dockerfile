@@ -1,7 +1,7 @@
 FROM golang:1.11-alpine
 
 RUN mkdir -p /go/src/github.com/g10guang/graduation/consumer/post_event
-COPY ./write_api /go/src/github.com/g10guang/graduation/consumer/post_event
+COPY ./post_event /go/src/github.com/g10guang/graduation/consumer/post_event
 
 FROM alpine:3.7
 
