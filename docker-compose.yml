@@ -6,24 +6,49 @@ services:
     ports:
       - "10003:10003"
     container_name: write_api
+    depends_on:
+      - mysql
+      - redis
+      - hadoop
+      - nsq
 
   read_api:
     build: ./read_api
     ports:
       - "10002:10002"
     container_name: read_api
+    depends_on:
+      - mysql
+      - redis
+      - hadoop
+      - nsq
 
   consumer_checksum:
     build: ./consumer/checksum
     container_name: consumer_checksum
+    depends_on:
+      - mysql
+      - redis
+      - hadoop
+      - nsq
 
   consumer_delete_event:
     build: ./consumer/delete_event
     container_name: consumer_delete_event
+    depends_on:
+      - mysql
+      - redis
+      - hadoop
+      - nsq
   
   consumer_post_event:
     build: ./consumer/post_event
     container_name: consumer_post_event
+    depends_on:
+      - mysql
+      - redis
+      - hadoop
+      - nsq
   
   mysql:
     image: mysql/mysql-server:8.0
