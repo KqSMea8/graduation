@@ -1,10 +1,11 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/g10guang/graduation/read_api/handler"
 	"github.com/g10guang/graduation/tools"
 	"github.com/sirupsen/logrus"
-	"net/http"
 )
 
 func main() {
