@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"github.com/g10guang/graduation/constdef"
 	"github.com/g10guang/graduation/model"
 	"github.com/g10guang/graduation/tools"
 	"github.com/jinzhu/gorm"
@@ -15,7 +16,9 @@ type UserInfoMySql struct {
 func NewUserInfoMySql() *UserInfoMySql {
 	var err error
 	h := &UserInfoMySql{}
-	h.Conn, err = gorm.Open(getUserInfoMySqlConfig())
+	driver, url := getUserInfoMySqlConfig()
+	logrus.Infof("driver: %s url: %s", driver, url)
+	h.Conn, err = gorm.Open(driver, url)
 	if err != nil {
 		logrus.Panicf("Create UserInfo MySQL connection Error: %s", err)
 		panic(err)
@@ -28,7 +31,7 @@ func NewUserInfoMySql() *UserInfoMySql {
 }
 
 func getUserInfoMySqlConfig() (string, string) {
-	return "mysql", "g10guang:hello@tcp(10.224.12.131:3306)/oss_meta?charset=utf8mb4&parseTime=True&loc=Local"
+	return "mysql", constdef.MySqlUrl
 }
 
 func (h *UserInfoMySql) Save(conn *gorm.DB, user *model.User) (err error) {

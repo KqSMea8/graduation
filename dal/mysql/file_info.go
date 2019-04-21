@@ -3,6 +3,7 @@ package mysql
 import (
 	"errors"
 
+	"github.com/g10guang/graduation/constdef"
 	"github.com/g10guang/graduation/model"
 	"github.com/g10guang/graduation/tools"
 	"github.com/jinzhu/gorm"
@@ -17,7 +18,9 @@ type FileInfoMySql struct {
 func NewFileInfoMySql() *FileInfoMySql {
 	var err error
 	h := &FileInfoMySql{}
-	h.conn, err = gorm.Open(getFileInfoMySql())
+	driver, url := getFileInfoMySql()
+	logrus.Infof("driver: %s url: %s", driver, url)
+	h.conn, err = gorm.Open(driver, url)
 	if err != nil {
 		logrus.Panicf("Create FileInfo MySQL connection Error: %s", err)
 		panic(err)
@@ -31,7 +34,7 @@ func NewFileInfoMySql() *FileInfoMySql {
 }
 
 func getFileInfoMySql() (string, string) {
-	return "mysql", "g10guang:hello@tcp(10.224.12.131:3306)/oss_meta?charset=utf8mb4&parseTime=True&loc=Local"
+	return "mysql", constdef.MySqlUrl
 }
 
 // 写需要涉及到事务，所以由外部传递 connection
@@ -47,11 +50,11 @@ func (h *FileInfoMySql) Save(conn *gorm.DB, file *model.File) error {
 }
 
 // 删需要涉及到事务，所以由外部传递 connection
-func (h *FileInfoMySql) Delete(conn *gorm.DB, fids []int64) (err error) {
+func (h *FileInfoMySql) Delete(conn *gorm.DB, fids []int64, uid int64) (err error) {
 	if conn == nil {
 		conn = h.conn
 	}
-	if err = conn.Where("fid IN (?)", fids).Delete(nil).Error; err != nil {
+	if err = conn.Where("fid IN (?) AND uid = ?", fids, uid).Delete(nil).Error; err != nil {
 		logrus.Errorf("Delete Error: %s", err)
 	}
 	return

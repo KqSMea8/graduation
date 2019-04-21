@@ -17,7 +17,7 @@ type FileContentRedis struct {
 func NewFileContentRedis() *FileContentRedis {
 	r := &FileContentRedis{}
 	r.conn = redis.NewClient(&redis.Options{
-		Addr:     "10.224.12.131:6379",
+		Addr:     constdef.RedisAddr,
 		Password: "",
 		DB:       1,
 	})

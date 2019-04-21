@@ -1,4 +1,4 @@
-version: "1"
+version: '2'
 
 services:
   write_api:
@@ -10,7 +10,12 @@ services:
       - mysql
       - redis
       - hadoop
-      - nsq
+      - nsqd
+    networks:
+      - internal_docker
+    environment:
+      - MYSQL_USERNAME=g10guang
+      - MYSQL_PASSWORD=hello
 
   read_api:
     build: ./read_api
@@ -21,7 +26,12 @@ services:
       - mysql
       - redis
       - hadoop
-      - nsq
+      - nsqd
+    networks:
+      - internal_docker
+    environment:
+      - MYSQL_USERNAME=g10guang
+      - MYSQL_PASSWORD=hello
 
   consumer_checksum:
     build: ./consumer/checksum
@@ -30,7 +40,12 @@ services:
       - mysql
       - redis
       - hadoop
-      - nsq
+      - nsqd
+    networks:
+      - internal_docker
+    environment:
+      - MYSQL_USERNAME=g10guang
+      - MYSQL_PASSWORD=hello
 
   consumer_delete_event:
     build: ./consumer/delete_event
@@ -39,7 +54,12 @@ services:
       - mysql
       - redis
       - hadoop
-      - nsq
+      - nsqd
+    networks:
+      - internal_docker
+    environment:
+      - MYSQL_USERNAME=g10guang
+      - MYSQL_PASSWORD=hello
   
   consumer_post_event:
     build: ./consumer/post_event
@@ -48,7 +68,12 @@ services:
       - mysql
       - redis
       - hadoop
-      - nsq
+      - nsqd
+    networks:
+      - internal_docker
+    environment:
+      - MYSQL_USERNAME=g10guang
+      - MYSQL_PASSWORD=hello
   
   mysql:
     image: mysql/mysql-server:8.0
@@ -56,9 +81,13 @@ services:
       MYSQL_ROOT_PASSWORD: hello
     ports: 
       - "3306:3306"
+    networks:
+      - internal_docker
 
   redis:
     image: redis:alpine
+    networks:
+      - internal_docker
 
   hadoop:
     image: sequenceiq/hadoop-docker:2.7.1
@@ -76,6 +105,38 @@ services:
       - "50075:50075"
       - "50090:50090"
       - "9000:9000"
+    networks:
+      - internal_docker
 
-  nsq:
-    
+  nsqlookupd:
+    image: nsqio/nsq:v1.1.0
+    command: /nsqlookupd
+    ports:
+        - "4160:4160"
+        - "4161:4161"
+    networks:
+      - internal_docker
+  nsqd:
+    image: nsqio/nsq:v1.1.0
+    command: /nsqd --lookupd-tcp-address=nsqlookupd:4160 -broadcast-address=nsqd
+    depends_on:
+      - nsqlookupd
+    ports:
+        - "4150:4150"
+        - "4151:4151"
+    networks:
+      - internal_docker
+  nsqadmin:
+    image: nsqio/nsq:v1.1.0
+    command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
+    depends_on:
+      - nsqlookupd  
+    ports:
+        - "4171:4171"
+        - "4170:4170"
+    networks:
+      - internal_docker
+
+networks:
+  internal_docker:
+    driver: bridge

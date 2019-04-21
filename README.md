@@ -34,6 +34,88 @@
 
 *图中小写组件为本系统设计*
 
+## 如何启动
+
+编译源码：
+
+```bash
+sh build.sh
+```
+
+通过 docker-compose 启动
+
+```bash
+docker-compose build
+# 先只启动 mysql，因为其需要设置
+docker-compose up -d mysql
+```
+
+需要进入 mysql 设置用户以及授权数据库：
+
+进入 mysql 容器：
+
+```sh
+➜  graduation git:(master) ✗ docker ps -a | grep 'mysql'
+ff7d52c5300a mysql/mysql-server:8.0 "/entrypoint.sh mysq…" 24 minutes ago Up 23 minutes (healthy) 0.0.0.0:3306->3306/tcp, 33060/tcp graduation_mysql_1
+
+➜  graduation git:(master) ✗ docker exec -it ff7d sh
+
+# 已经进入 mysql 容器，进入 mysql client
+sh-4.2# mysql -uroot -phello
+
+# 可以添加对登陆 host 做限制
+mysql> create user 'g10guang'@'%' identified by 'hello';
+Query OK, 0 rows affected (0.02 sec)
+
+mysql> create database oss_meta;
+
+mysql> grant all on oss_meta.* to g10guang@'%';
+```
+
+执行 [file.sql](./model/file.sql) 和 [user.sql](./model/user.sql)
+
+启动所有 service:
+
+```bash
+docker-compose up -d
+```
+
+具体每个模块的日志可以通过：`docker-compose logs [service_name]`查看，或者直接进入容器查看
+
+查看 HDFS 文件系统：
+
+```url
+http://127.0.0.1:50070/explorer.html#/
+```
+
+查看 nsqadmin：
+
+```url
+http://127.0.0.1:4171/
+```
+
+### 接口调试
+
+write_api /post 请求：
+
+![write_api post 请求格式](./doc/write_api_post.png)
+
+write_api /delete 请求：
+
+![write_api delete 请求格式](./doc/write_api_delete.png)
+
+read_api /userFile 请求：
+
+![read_api userFile 请求格式](./doc/read_api_userFile.png)
+
+read_api /get 请求：
+
+![read_api get 请求格式](./doc/read_api_get.png)
+
+read_api /meta 请求：
+
+![read_api meta 请求格式](./doc/read_api_meta.png)
+
 ### 技术选型
 
 #### 编程语言 Golang

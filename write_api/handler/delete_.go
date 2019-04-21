@@ -3,6 +3,10 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/g10guang/graduation/constdef"
 	"github.com/g10guang/graduation/dal/mq"
 	"github.com/g10guang/graduation/model"
@@ -10,9 +14,6 @@ import (
 	"github.com/g10guang/graduation/write_api/jobs"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 type DeleteHandler struct {
@@ -61,7 +62,7 @@ func (h *DeleteHandler) parseParams(ctx context.Context, r *http.Request) (err e
 
 func (h *DeleteHandler) delete_(ctx context.Context) (err error) {
 	jobmgr := tools.NewJobMgr(time.Second * 2)
-	jobmgr.AddJob(jobs.NewDeleteFileMetaJob(h.Fids))
+	jobmgr.AddJob(jobs.NewDeleteFileMetaJob(h.Fids, h.UserId))
 	if err := jobmgr.Start(ctx); err != nil {
 		logrus.Errorf("delete fids job exec Error: %s", err)
 		return err

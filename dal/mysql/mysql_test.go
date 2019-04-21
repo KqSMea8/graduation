@@ -67,7 +67,7 @@ func TestMGet(t *testing.T) {
 }
 
 func TestDel(t *testing.T) {
-	if err := FileMySQL.Delete(nil, []int64{0}); err != nil {
+	if err := FileMySQL.Delete(nil, []int64{0}, 0); err != nil {
 		panic(err)
 	}
 }

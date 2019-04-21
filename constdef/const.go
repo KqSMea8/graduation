@@ -1,5 +1,10 @@
 package constdef
 
+import (
+	"fmt"
+	"os"
+)
+
 // request 请求中的字段常量定义
 const (
 	Param_Uid      = "uid"
@@ -41,13 +46,24 @@ var ImageFormatList = []ImageFormat{Jpeg, Png, WaterMarkJpeg, WaterMarkPng}
 
 // NSQ 配置信息
 const (
-	NsqLookupdAddr = "10.224.12.131:4161"
-	NsqdAddr       = "10.224.12.131:4150"
+	NsqLookupdAddr = "nsqlookupd:4161"
+	NsqdAddr       = "nsqd:4150"
 )
 
 // HDFS 配置
 const (
-	WebHdfsAddr = "10.224.12.131:50070"
+	WebHdfsAddr = "hadoop:50070"
 	WebHdfsUser = "root"
 	WebHdfsDir  = "/oss/image"
+)
+
+// MySQL 配置
+var (
+	MySqlDbName = "oss_meta"
+	MySqlUrl    = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local", os.Getenv("MYSQL_USERNAME"), os.Getenv("MYSQL_PASSWORD"), "mysql", 3306, MySqlDbName)
+)
+
+// redis 配置
+const (
+	RedisAddr = "redis:6379"
 )

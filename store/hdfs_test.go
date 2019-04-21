@@ -8,12 +8,13 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/vladimirvivien/gowfs"
+	"github.com/g10guang/graduation/constdef"
 )
 
 func TestHDFSCreate(t *testing.T) {
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetReportCaller(true)
-	storage := NewHdfsStorage("10.224.12.131:50070", "root", "/oss/image")
+	storage := NewHdfsStorage(constdef.WebHdfsAddr, constdef.WebHdfsUser, constdef.WebHdfsDir)
 	fp, err := os.Open("/Users/g10guang/Public/output.jpeg")
 	if err != nil {
 		panic(err)
@@ -27,7 +28,7 @@ func TestHDFSCreate(t *testing.T) {
 func TestHDFSOpen(t *testing.T) {
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetReportCaller(true)
-	storage := NewHdfsStorage("10.224.12.131:50070", "root", "/oss/image")
+	storage := NewHdfsStorage(constdef.WebHdfsAddr, constdef.WebHdfsUser, constdef.WebHdfsDir)
 	reader, err := storage.Read(1112599362007408640)
 	if err != nil {
 		panic(err)
@@ -47,7 +48,7 @@ func TestHDFSOpen(t *testing.T) {
 func TestHDFSDelete(t *testing.T) {
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetReportCaller(true)
-	storage := NewHdfsStorage("10.224.12.131:50070", "root", "/oss/image")
+	storage := NewHdfsStorage(constdef.WebHdfsAddr, constdef.WebHdfsUser, constdef.WebHdfsDir)
 	storage.Delete(1)
 	time.Sleep(time.Second)
 }
@@ -55,7 +56,7 @@ func TestHDFSDelete(t *testing.T) {
 func TestHDFSSum(t *testing.T) {
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetReportCaller(true)
-	storage := NewHdfsStorage("10.224.12.131:50070", "root", "/oss/image")
+	storage := NewHdfsStorage(constdef.WebHdfsAddr, constdef.WebHdfsUser, constdef.WebHdfsDir)
 	sum, err := storage.client.GetFileChecksum(gowfs.Path{Name: "/oss/image/1112619134648320000"})
 	if err != nil {
 		panic(err)

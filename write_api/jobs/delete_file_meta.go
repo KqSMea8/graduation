@@ -11,11 +11,13 @@ const retryTime = 2
 
 type DeleteFileMetaJob struct {
 	fids []int64
+	uid  int64
 }
 
-func NewDeleteFileMetaJob(fids []int64) *DeleteFileMetaJob {
+func NewDeleteFileMetaJob(fids []int64, uid int64) *DeleteFileMetaJob {
 	j := &DeleteFileMetaJob{
 		fids: fids,
+		uid:  uid,
 	}
 	return j
 }
@@ -40,7 +42,7 @@ func (j *DeleteFileMetaJob) Run() (interface{}, error) {
 			}()
 		}
 	}()
-	if err = mysql.FileMySQL.Delete(conn, j.fids); err != nil {
+	if err = mysql.FileMySQL.Delete(conn, j.fids, j.uid); err != nil {
 		logrus.Errorf("Delete MySQL Error: %s", err)
 		return nil, err
 	}

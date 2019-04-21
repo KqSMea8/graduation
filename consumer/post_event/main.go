@@ -3,15 +3,16 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/g10guang/graduation/constdef"
 	"github.com/g10guang/graduation/consumer/post_event/handler"
 	"github.com/g10guang/graduation/model"
 	"github.com/g10guang/graduation/tools"
 	"github.com/nsqio/go-nsq"
 	"github.com/sirupsen/logrus"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {
@@ -26,10 +27,14 @@ func main() {
 	}
 	consumer.ChangeMaxInFlight(200)
 	consumer.AddConcurrentHandlers(nsq.HandlerFunc(compress), 10)
+
 	if err = consumer.ConnectToNSQLookupds([]string{constdef.NsqLookupdAddr}); err != nil {
 		logrus.Panicf("ConnectToNSQLookupds Error: %s", err)
 		panic(err)
 	}
+
+	//logrus.Infof("ConnectToNsda: %v", []string{constdef.NsqdAddr})
+
 	//if err = consumer.ConnectToNSQDs([]string{constdef.NsqdAddr}); err != nil {
 	//	logrus.Panicf("ConnectToNSQDs Error: %s", err)
 	//	panic(err)
@@ -82,4 +87,3 @@ func parsePostFileEventMsg(body []byte) *model.PostFileEvent {
 	}
 	return m
 }
-

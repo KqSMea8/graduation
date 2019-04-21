@@ -37,6 +37,7 @@ func (l *FileMetaLoader) Run() (interface{}, error) {
 
 	if len(missFids) == 0 {
 		// 全部 cache 命中
+		logrus.Debugf("FileInfoMeta redis cache hit Fid: %v", l.fids)
 		return metas, nil
 	}
 

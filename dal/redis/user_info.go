@@ -9,6 +9,7 @@ import (
 	"github.com/g10guang/graduation/model"
 	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"
+	"github.com/g10guang/graduation/constdef"
 )
 
 type UserInfoRedis struct {
@@ -18,7 +19,7 @@ type UserInfoRedis struct {
 func NewUserInfoRedis() *UserInfoRedis {
 	r := &UserInfoRedis{}
 	r.conn = redis.NewClient(&redis.Options{
-		Addr:     "10.224.12.131:6379",
+		Addr:     constdef.RedisAddr,
 		Password: "",
 		DB:       0,
 	})

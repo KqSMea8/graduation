@@ -23,6 +23,7 @@ func StopNsqProducer() {
 }
 
 func PublishNsq(topic string, content []byte) error {
+	logrus.Debugf("PublishNsq topic: %s content: %s", topic, string(content))
 	err := nsqProducer.Publish(topic, content)
 	if err != nil {
 		logrus.Errorf("PublishNsq Error: %s topic: %s content: %s", err, topic, string(content))
